@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <iterator>
 #include <map>
+#include <numeric>
 #include <queue>
 #include <utility>
 #include <vector>
