@@ -185,7 +185,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "Dtype v = variance[idx_chans];",    // NOLINT
 "",    // NOLINT
 "m = -scale * m;",    // NOLINT
-"v = native_powr((Dtype)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
+"v = native_powr((float)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
 "",    // NOLINT
 "const int_tp out_off = (idx_num * channels + idx_chans) * spatial_dim + idx_spatial_dim;",    // NOLINT
 "top[out_off] = v * (top[out_off] + m);",    // NOLINT
@@ -205,7 +205,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "Dtype v = variance[idx_chans];",    // NOLINT
 "",    // NOLINT
 "m = -scale * m;",    // NOLINT
-"v = native_powr((Dtype)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
+"v = native_powr((float)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
 "",    // NOLINT
 "const int_tp out_off = (idx_num * channels + idx_chans) * spatial_dim + idx_spatial_dim;",    // NOLINT
 "top[out_off] = v * (bottom[out_off] + m);",    // NOLINT
