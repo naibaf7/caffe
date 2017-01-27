@@ -3439,7 +3439,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "const int_tp height, const int_tp width, const int_tp size,",    // NOLINT
 "const Dtype alpha_over_size, const Dtype k,",    // NOLINT
 "__global Dtype* const out,",    // NOLINT
-"const Dtype negative_beta) {",    // NOLINT
+"const float negative_beta) {",    // NOLINT
 "for (int_tp index = get_global_id(0); index < nthreads;",    // NOLINT
 "index += get_global_size(0)) {",    // NOLINT
 "// find out the local offset",    // NOLINT
@@ -3491,7 +3491,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "const Dtype alpha_over_size, const Dtype k,",    // NOLINT
 "__global Dtype* const scale,",    // NOLINT
 "__global Dtype* const out,",    // NOLINT
-"const Dtype negative_beta) {",    // NOLINT
+"const float negative_beta) {",    // NOLINT
 "for (int_tp index = get_global_id(0); index < nthreads;",    // NOLINT
 "index += get_global_size(0)) {",    // NOLINT
 "// find out the local offset",    // NOLINT
