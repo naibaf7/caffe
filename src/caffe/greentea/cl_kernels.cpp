@@ -185,7 +185,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "Dtype v = variance[idx_chans];",    // NOLINT
 "",    // NOLINT
 "m = -scale * m;",    // NOLINT
-"v = native_powr((Dtype)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
+"v = native_powr((float)mad(scale, v, eps), (float)-0.5);",    // NOLINT
 "",    // NOLINT
 "const int_tp out_off = (idx_num * channels + idx_chans) * spatial_dim + idx_spatial_dim;",    // NOLINT
 "top[out_off] = v * (top[out_off] + m);",    // NOLINT
@@ -205,7 +205,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "Dtype v = variance[idx_chans];",    // NOLINT
 "",    // NOLINT
 "m = -scale * m;",    // NOLINT
-"v = native_powr((Dtype)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
+"v = native_powr((float)mad(scale, v, eps), (float)-0.5);",    // NOLINT
 "",    // NOLINT
 "const int_tp out_off = (idx_num * channels + idx_chans) * spatial_dim + idx_spatial_dim;",    // NOLINT
 "top[out_off] = v * (bottom[out_off] + m);",    // NOLINT
@@ -3439,7 +3439,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "const int_tp height, const int_tp width, const int_tp size,",    // NOLINT
 "const Dtype alpha_over_size, const Dtype k,",    // NOLINT
 "__global Dtype* const out,",    // NOLINT
-"const Dtype negative_beta) {",    // NOLINT
+"const float negative_beta) {",    // NOLINT
 "for (int_tp index = get_global_id(0); index < nthreads;",    // NOLINT
 "index += get_global_size(0)) {",    // NOLINT
 "// find out the local offset",    // NOLINT
@@ -3450,7 +3450,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "const int_tp step = height * width;",    // NOLINT
 "__global const Dtype* in_off = in + offset;",    // NOLINT
 "__global Dtype* out_off = out + offset;",    // NOLINT
-"Dtype scale_val;",    // NOLINT
+"float scale_val;",    // NOLINT
 "int_tp head = 0;",    // NOLINT
 "const int_tp pre_pad = (size - 1) / 2;",    // NOLINT
 "const int_tp post_pad = size - pre_pad - 1;",    // NOLINT
@@ -3491,7 +3491,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "const Dtype alpha_over_size, const Dtype k,",    // NOLINT
 "__global Dtype* const scale,",    // NOLINT
 "__global Dtype* const out,",    // NOLINT
-"const Dtype negative_beta) {",    // NOLINT
+"const float negative_beta) {",    // NOLINT
 "for (int_tp index = get_global_id(0); index < nthreads;",    // NOLINT
 "index += get_global_size(0)) {",    // NOLINT
 "// find out the local offset",    // NOLINT
@@ -3503,7 +3503,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "__global const Dtype* in_off = in + offset;",    // NOLINT
 "__global Dtype* out_off = out + offset;",    // NOLINT
 "__global Dtype* scale_off = scale + offset;",    // NOLINT
-"Dtype scale_val;",    // NOLINT
+"float scale_val;",    // NOLINT
 "int_tp head = 0;",    // NOLINT
 "const int_tp pre_pad = (size - 1) / 2;",    // NOLINT
 "const int_tp post_pad = size - pre_pad - 1;",    // NOLINT
