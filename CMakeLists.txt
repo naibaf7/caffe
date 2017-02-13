@@ -18,9 +18,23 @@ endif()
 project(Caffe C CXX)
 
 # ---[ Caffe version
-set(CAFFE_TARGET_VERSION "1.0.0-rc3" CACHE STRING "Caffe logical version")
-set(CAFFE_TARGET_SOVERSION "1.0.0-rc3" CACHE STRING "Caffe soname version")
+set(CAFFE_TARGET_VERSION "1.0.0-rc4" CACHE STRING "Caffe logical version")
+set(CAFFE_TARGET_SOVERSION "1.0.0-rc4" CACHE STRING "Caffe soname version")
 add_definitions(-DCAFFE_VERSION=${CAFFE_TARGET_VERSION})
+
+# This code is taken from https://github.com/sh1r0/caffe-android-lib
+# Search packages for host system instead of packages for target system
+# in case of cross compilation these macro should be defined by toolchain file
+if(NOT COMMAND find_host_package)
+  macro(find_host_package)
+    find_package(${ARGN})
+  endmacro()
+endif()
+if(NOT COMMAND find_host_program)
+  macro(find_host_program)
+    find_program(${ARGN})
+  endmacro()
+endif()
 
 # ---[ Using cmake scripts and modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
@@ -33,6 +47,7 @@ include(cmake/Misc.cmake)
 include(cmake/Summary.cmake)
 include(cmake/ConfigGen.cmake)
 include(cmake/WindowsCreateLinkHeader.cmake)
+include(cmake/TargetResolvePrerequesites.cmake)
 
 # ---[ Options
 caffe_option(CPU_ONLY "Build Caffe without CUDA and OpenCL support" OFF)
@@ -44,6 +59,7 @@ caffe_option(USE_CLBLAS "Build Caffe with clBLAS support (instead of using Vienn
 caffe_option(USE_CLBLAST "Build Caffe with CLBlast support (instead of using ViennaClBLAS)" OFF)
 caffe_option(USE_ISAAC "Build Caffe with ISAAC support (instead of using ViennaClBLAS)" OFF)
 caffe_option(USE_CUDNN "Build Caffe with cuDNN library support" OFF)
+caffe_option(USE_NCCL "Build Caffe with NCCL library support" OFF)
 caffe_option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 if(MSVC)
   # default to static libs
@@ -53,7 +69,7 @@ else()
 endif()
 caffe_option(BUILD_python "Build Python wrapper" ON)
 set(python_version "2" CACHE STRING "Specify which Python version to use")
-caffe_option(BUILD_matlab "Build Matlab wrapper" OFF IF UNIX OR APPLE)
+caffe_option(BUILD_matlab "Build Matlab wrapper" OFF)
 caffe_option(BUILD_docs   "Build documentation" ON IF UNIX OR APPLE)
 caffe_option(BUILD_python_layer "Build the Caffe Python layer" ON)
 caffe_option(USE_OPENCV "Build with OpenCV support" ON)
@@ -78,8 +94,14 @@ if(USE_ISAAC)
 endif()
 
 caffe_option(protobuf_MODULE_COMPATIBLE "Make the protobuf-config.cmake compatible with the module mode" ON IF MSVC)
+caffe_option(COPY_PREREQUISITES "Copy the prerequisites next to each executable or shared library directory" ON IF MSVC)
+caffe_option(INSTALL_PREREQUISITES "Install the prerequisites next to each executable or shared library directory" ON IF MSVC)
 
 if(MSVC AND BUILD_SHARED_LIBS)
+  if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    # see issue https://gitlab.kitware.com/cmake/cmake/issues/16552#note_215236
+    message(FATAL_ERROR "The Visual Studio generator cannot build a shared library. Use the Ninja generator instead.")
+  endif()
   # Some tests (solver tests) fail when caffe is built as a shared library. The problem comes
   # from protobuf that has a global static empty_string_ variable. Since caffe and test.testbin
   # link to a static protobuf library both end up with their own instance of the empty_string_
@@ -88,12 +110,30 @@ if(MSVC AND BUILD_SHARED_LIBS)
   message(WARNING "Some tests (solvers) will fail when building as a shared library with MSVC")
 endif()
 
+# ---[ Prebuild dependencies on windows
+include(cmake/WindowsDownloadPrebuiltDependencies.cmake)
+
+# This code is taken from https://github.com/sh1r0/caffe-android-lib
+caffe_option(USE_HDF5 "Build with hdf5" ON)
+if(ANDROID)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so")
+  caffe_enable_cpp11_support()
+endif()
+
 # ---[ Dependencies
 include(cmake/Dependencies.cmake)
 
 # ---[ Flags
+if(DISABLE_DEVICE_HOST_UNIFIED_MEMORY)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_DEVICE_HOST_UNIFIED_MEMORY")
+endif()
+
 if(UNIX OR APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -std=c++11 -DCMAKE_BUILD")
+endif()
+
+if(DISABLE_DOUBLE_SUPPORT)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_DOUBLE_SUPPORT")
 endif()
 
 if(MSVC)
@@ -152,6 +192,8 @@ add_subdirectory(src/gtest)
 add_subdirectory(src/caffe)
 add_subdirectory(tools)
 add_subdirectory(examples)
+# This code is taken from https://github.com/sh1r0/caffe-android-lib
+add_subdirectory(android)
 add_subdirectory(python)
 add_subdirectory(matlab)
 add_subdirectory(docs)

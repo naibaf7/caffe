@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 #include <vector>
 #include "caffe/common.hpp"
@@ -1726,19 +1727,6 @@ void LibDNNConv<Dtype>::Backward(bool prop_down_data, bool prop_down_weights,
       ims *= im_in_shape_[i];
     }
     LibDNN<Dtype>::SetMemory(bottom_diff, ims, 0, (Dtype) 0);
-  }
-
-  if (prop_down_weights && wgalgo_ == LIBDNN_CONVOLUTION_WG_ALGO_ATOMIC) {
-    int_tp wms = fmaps_in_ * fmaps_out_;
-    for (int_tp i = 0; i < kernel_shape_.size(); ++i) {
-      wms *= kernel_shape_[i];
-    }
-    LibDNN<Dtype>::SetMemory(bottom_diff, wms, 0, (Dtype) 0);
-  }
-
-  if (bias_term_ && prop_down_weights &&
-      wgalgo_ == LIBDNN_CONVOLUTION_WG_ALGO_ATOMIC) {
-    LibDNN<Dtype>::SetMemory(bias_diff, fmaps_out_, 0, (Dtype) 0);
   }
 
 #ifdef USE_GREENTEA

@@ -3,6 +3,10 @@
 
 #include <cstdlib>
 
+#ifdef USE_MKL
+  #include "mkl.h"
+#endif
+
 #include "caffe/common.hpp"
 #include "caffe/greentea/greentea.hpp"
 #include "caffe/util/math_functions.hpp"
@@ -97,6 +101,8 @@ class SyncedMemory {
 #endif  // !CPU_ONLY
 
  private:
+  void check_device();
+
   void to_cpu();
   void to_gpu();
   void* cpu_ptr_;
@@ -112,7 +118,6 @@ class SyncedMemory {
 #ifdef USE_GREENTEA
   cl_mem cl_gpu_mem_;
 #endif
-
 
 DISABLE_COPY_AND_ASSIGN(SyncedMemory);
 };

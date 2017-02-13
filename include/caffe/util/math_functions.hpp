@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <cmath>  // for std::fabs and std::signbit
+//  This code is taken from https://github.com/sh1r0/caffe-android-lib
+#include <cstring>  // for memset
 
 #include "glog/logging.h"
 
@@ -186,6 +188,10 @@ void caffe_gpu_scal(const int_tp N, const Dtype alpha, Dtype *X);
 
 template<typename Dtype>
 void caffe_gpu_add(const int_tp N, const Dtype* a, const Dtype* b, Dtype* y);
+
+template <typename Dtype>
+void caffe_gpu_scal(const int_tp N, const Dtype alpha, Dtype* X,
+                    cudaStream_t str);
 
 template<typename Dtype>
 void caffe_gpu_sub(const int_tp N, const Dtype* a, const Dtype* b, Dtype* y);

@@ -202,7 +202,7 @@ function(detect_cuDNN)
    PATHS ${CUDNN_ROOT} $ENV{CUDNN_ROOT} ${CUDNN_INCLUDE} ${__libpath_hist} ${__libpath_hist}/../lib
    ${_path_suffixes}
    DOC "Path to cuDNN library.")
-  
+
   if(CUDNN_INCLUDE AND CUDNN_LIBRARY)
     set(HAVE_CUDNN  TRUE PARENT_SCOPE)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
@@ -302,7 +302,7 @@ mark_as_advanced(CUDA_SDK_ROOT_DIR CUDA_SEPARABLE_COMPILATION)
 if(APPLE)
   caffe_detect_darwin_version(OSX_VERSION)
 
-  # OSX 10.9 and higher uses clang/libc++ by default which is incompartible with old CUDA toolkits
+  # OSX 10.9 and higher uses clang/libc++ by default which is incompatible with old CUDA toolkits
   if(OSX_VERSION VERSION_GREATER 10.8)
     # enabled by default if and only if CUDA version is less than 7.0
     caffe_option(USE_libstdcpp "Use libstdc++ instead of libc++" (CUDA_VERSION VERSION_LESS 7.0))

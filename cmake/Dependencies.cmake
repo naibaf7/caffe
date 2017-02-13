@@ -44,11 +44,22 @@ if(MSVC)
   set(HDF5_LIBRARIES hdf5-shared)
   set(HDF5_HL_LIBRARIES hdf5_hl-shared)
 else()
-  find_package(HDF5 COMPONENTS HL REQUIRED)
+  if(USE_HDF5)
+    find_package(HDF5 COMPONENTS HL REQUIRED)
+  endif()
 endif()
+
 include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
 list(APPEND Caffe_LINKER_LIBS PUBLIC ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
 list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${HDF5_INCLUDE_DIRS})
+
+# This code is taken from https://github.com/sh1r0/caffe-android-lib
+if(USE_HDF5)
+  find_package(HDF5 COMPONENTS HL REQUIRED)
+  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
+  list(APPEND Caffe_LINKER_LIBS ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
+  add_definitions(-DUSE_HDF5)
+endif()
 
 # ---[ LMDB
 if(USE_LMDB)
@@ -170,6 +181,13 @@ if (USE_CLBLAST)
   list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_CLBLAST)
 endif()
 
+if(USE_NCCL)
+  find_package(NCCL REQUIRED)
+  include_directories(SYSTEM ${NCCL_INCLUDE_DIR})
+  list(APPEND Caffe_LINKER_LIBS ${NCCL_LIBRARIES})
+  add_definitions(-DUSE_NCCL)
+endif()
+
 # ---[ OpenCV
 if(USE_OPENCV)
   find_package(OpenCV QUIET COMPONENTS core highgui imgproc imgcodecs)
@@ -281,11 +299,17 @@ endif()
 
 # ---[ Matlab
 if(BUILD_matlab)
-  find_package(MatlabMex)
-  if(MATLABMEX_FOUND)
-    set(HAVE_MATLAB TRUE)
+  if(MSVC)
+    find_package(Matlab COMPONENTS MAIN_PROGRAM MX_LIBRARY)
+    if(MATLAB_FOUND)
+      set(HAVE_MATLAB TRUE)
+    endif()
+  else()
+    find_package(MatlabMex)
+    if(MATLABMEX_FOUND)
+      set(HAVE_MATLAB TRUE)
+    endif()
   endif()
-
   # sudo apt-get install liboctave-dev
   find_program(Octave_compiler NAMES mkoctfile DOC "Octave C++ compiler")
 

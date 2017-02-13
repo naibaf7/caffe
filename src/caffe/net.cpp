@@ -5,7 +5,9 @@
 #include <utility>
 #include <vector>
 
+#ifdef USE_HDF5
 #include "hdf5.h"
+#endif  // USE_HDF5
 
 #include "caffe/common.hpp"
 #include "caffe/layer.hpp"
@@ -21,17 +23,15 @@ namespace caffe {
 
 
 template<typename Dtype>
-Net<Dtype>::Net(const NetParameter& param, device* device_context,
-                const Net* root_net)
-    : device_(device_context), root_net_(root_net) {
+Net<Dtype>::Net(const NetParameter& param, device* device_context)
+    : device_(device_context) {
   Init(param);
 }
 
 template<typename Dtype>
 Net<Dtype>::Net(const string& param_file, Phase phase, device* device_context,
-                const int level, const vector<string>* stages,
-                const Net* root_net)
-    : device_(device_context), root_net_(root_net) {
+                const int level, const vector<string>* stages)
+    : device_(device_context) {
   NetParameter param;
   ReadNetParamsFromTextFileOrDie(param_file, &param);
   // Set phase, stages and level
@@ -47,8 +47,6 @@ Net<Dtype>::Net(const string& param_file, Phase phase, device* device_context,
 
 template<typename Dtype>
 void Net<Dtype>::Init(const NetParameter& in_param) {
-  CHECK(Caffe::root_solver() || root_net_)
-      << "root_net_ needs to be set for all non-root solvers";
   // Set phase from the state.
   phase_ = in_param.state().phase();
   // Filter layers based on their include/exclude rules and
@@ -75,9 +73,6 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
   top_id_vecs_.resize(param.layer_size());
   bottom_need_backward_.resize(param.layer_size());
   for (int_tp layer_id = 0; layer_id < param.layer_size(); ++layer_id) {
-    // For non-root solvers, whether this layer is shared from root_net_.
-    bool share_from_root = !Caffe::root_solver()
-        && root_net_->layers_[layer_id]->ShareInParallel();
     // Inherit phase from net if unset.
     if (!param.layer(layer_id).has_phase()) {
       param.mutable_layer(layer_id)->set_phase(phase_);
@@ -95,13 +90,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
           layer_param.bottom_size())<< "propagate_down param must be specified "
       << "either 0 or bottom_size times ";
     }
-    if (share_from_root) {
-      LOG(INFO) << "Sharing layer " << layer_param.name() << " from root net";
-      layers_.push_back(root_net_->layers_[layer_id]);
-      layers_[layer_id]->SetShared(true);
-    } else {
-      layers_.push_back(LayerRegistry<Dtype>::CreateLayer(layer_param));
-    }
+    layers_.push_back(LayerRegistry<Dtype>::CreateLayer(layer_param));
     layer_names_.push_back(layer_param.name());
     if (Caffe::root_solver()) {
       LOG(INFO) << "Creating Layer " << layer_param.name();
@@ -141,22 +130,9 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
     }
     // After this layer is connected, set it up.
-    if (share_from_root) {
-      // Set up size of top blobs using root_net_
-      const vector<Blob<Dtype>*>& base_top = root_net_->top_vecs_[layer_id];
-      const vector<Blob<Dtype>*>& this_top = this->top_vecs_[layer_id];
-      for (int_tp top_id = 0; top_id < base_top.size(); ++top_id) {
-        this_top[top_id]->ReshapeLike(*base_top[top_id]);
-        LOG(INFO) << "Created top blob " << top_id << " (shape: "
-            << this_top[top_id]->shape_string() <<  ") for shared layer "
-            << layer_param.name();
-      }
-    } else {
-      layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]);
-    }
-    if (Caffe::root_solver()) {
-      LOG(INFO) << "Setting up " << layer_names_[layer_id];
-    }
+    layers_[layer_id]->SetUp(bottom_vecs_[layer_id], top_vecs_[layer_id]);
+    LOG_IF(INFO, Caffe::root_solver())
+        << "Setting up " << layer_names_[layer_id];
     for (int_tp top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
       if (blob_loss_weights_.size() <= top_id_vecs_[layer_id][top_id]) {
         blob_loss_weights_.resize(top_id_vecs_[layer_id][top_id] + 1, Dtype(0));
@@ -582,11 +558,14 @@ Dtype Net<Dtype>::ForwardFromTo(int_tp start, int_tp end) {
   CHECK_LT(end, layers_.size());
   Dtype loss = 0;
   for (int_tp i = start; i <= end; ++i) {
-    // LOG(ERROR) << "Forwarding " << layer_names_[i];
+    for (int_tp c = 0; c < before_forward_.size(); ++c) {
+      before_forward_[c]->run(i);
+    }
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
     loss += layer_loss;
-    if (debug_info_) {
-      ForwardDebugInfo(i);
+    if (debug_info_) { ForwardDebugInfo(i); }
+    for (int_tp c = 0; c < after_forward_.size(); ++c) {
+      after_forward_[c]->run(i);
     }
   }
   return loss;
@@ -629,12 +608,18 @@ void Net<Dtype>::BackwardFromTo(int_tp start, int_tp end) {
   CHECK_GE(end, 0);
   CHECK_LT(start, layers_.size());
   for (int_tp i = start; i >= end; --i) {
+    for (int_tp c = 0; c < before_backward_.size(); ++c) {
+      before_backward_[c]->run(i);
+    }
     if (layer_need_backward_[i]) {
       layers_[i]->Backward(top_vecs_[i], bottom_need_backward_[i],
                            bottom_vecs_[i]);
       if (debug_info_) {
         BackwardDebugInfo(i);
       }
+    }
+    for (int c = 0; c < after_backward_.size(); ++c) {
+      after_backward_[c]->run(i);
     }
   }
 }
@@ -854,6 +839,7 @@ void Net<Dtype>::CopyTrainedLayersFromBinaryProto(
 
 template <typename Dtype>
 void Net<Dtype>::CopyTrainedLayersFromHDF5(const string trained_filename) {
+#ifdef USE_HDF5
   hid_t file_hid = H5Fopen(trained_filename.c_str(), H5F_ACC_RDONLY,
                            H5P_DEFAULT);
   CHECK_GE(file_hid, 0) << "Couldn't open " << trained_filename;
@@ -900,6 +886,10 @@ void Net<Dtype>::CopyTrainedLayersFromHDF5(const string trained_filename) {
   }
   H5Gclose(data_hid);
   H5Fclose(file_hid);
+#else
+  LOG(FATAL) << "CopyTrainedLayersFromHDF5 requires hdf5;"
+             << " compile with USE_HDF5.";
+#endif  // USE_HDF5
 }
 
 template <typename Dtype>
@@ -917,6 +907,8 @@ void Net<Dtype>::ToProto(NetParameter* param, bool write_diff) const {
 
 template <typename Dtype>
 void Net<Dtype>::ToHDF5(const string& filename, bool write_diff) const {
+// This code is taken from https://github.com/sh1r0/caffe-android-lib
+#ifdef USE_HDF5
   hid_t file_hid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
       H5P_DEFAULT);
   CHECK_GE(file_hid, 0)
@@ -970,6 +962,10 @@ void Net<Dtype>::ToHDF5(const string& filename, bool write_diff) const {
     H5Gclose(diff_hid);
   }
   H5Fclose(file_hid);
+// This code is taken from https://github.com/sh1r0/caffe-android-lib
+#else
+  LOG(FATAL) << "ToHDF5 requires hdf5; compile with USE_HDF5.";
+#endif  // USE_HDF5
 }
 
 template <typename Dtype>

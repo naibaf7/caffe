@@ -82,6 +82,10 @@ function(caffe_generate_export_configs)
     endforeach()
   endif()
 
+  # This code is taken from https://github.com/sh1r0/caffe-android-lib
+  if(USE_HDF5)
+    list(APPEND Caffe_DEFINITIONS -DUSE_HDF5)
+  endif()
 
   if(NOT HAVE_CUDNN)
     set(HAVE_CUDNN FALSE)
@@ -105,7 +109,7 @@ function(caffe_generate_export_configs)
 
   # ---[ Configure and install version file ]---
 
-  # TODO: Lines below are commented because Caffe does't declare its version in headers.
+  # TODO: Lines below are commented because Caffe doesn't declare its version in headers.
   # When the declarations are added, modify `caffe_extract_caffe_version()` macro and uncomment
 
   # configure_file(cmake/Templates/CaffeConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/CaffeConfigVersion.cmake" @ONLY)

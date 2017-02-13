@@ -17,7 +17,7 @@
 // Comparative check difference limit
 #define kappa 0.05
 // Comparative check shape size limit
-#define element_limit 10000000
+#define element_limit 1000000
 
 
 namespace caffe {
@@ -611,7 +611,6 @@ class LibDNNComparativeConvTest : public GPUDeviceTest<TypeParam> {
   }
 
   virtual void SetUp() {
-    // fill the values
     blob_bottom_vec_.push_back(blob_bottom_);
     blob_bottom_vec_ref_.push_back(blob_bottom_ref_);
     blob_top_vec_.push_back(blob_top_);
