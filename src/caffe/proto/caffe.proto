@@ -408,6 +408,7 @@ message LayerParameter {
   optional WindowDataParameter window_data_param = 129;
   optional MergeCropParameter mergecrop_param = 147;
   optional AffinityParameter affinity_param = 148;
+  optional SRPRNNParameter srprnn_param = 149;
 }
 
 // Message that stores parameters used to apply transformation
@@ -1421,6 +1422,72 @@ message AffinityParameter {
   // Offset parameter to change the channel to use for creating an affinity graph
   // Defined once per bottom blob
   repeated int64 offset = 1;
+}
+
+
+message SRPRNNParameter {
+  enum GridType {
+  	CARTESIAN = 0;
+  	HEXTILES = 1;
+  }
+  optional GridType grid = 1 [default = CARTESIAN];
+  optional int64 backprop_steps = 2 [default = 0];
+  // List of network input neurons (feature maps)
+  repeated string input_neuron = 3;
+  // List of network output neurons (feature maps)
+  repeated string output_neuron = 4;
+  // List of network export neurons (additonal debugging top blobs)
+  repeated string export_neuron = 5;
+  // List of hidden neurons
+  repeated SRPRNNNeuron hidden_neuron = 6;
+}
+
+message SRPRNNNeuron {
+  // Neuron name
+  optional string name = 1 [default = ""];
+  // Grid periodicity defined once per grid dimension
+  repeated int64 periodicity = 2;
+  // Neuron initial bias
+  optional float bias = 3;
+  enum SRPRNNActivation {
+    ReLU = 0;
+    TanH = 1;
+    Sigmoid = 2;
+  }
+  // Activation used for the neuron
+  optional SRPRNNActivation activation = 4 [default = ReLU];
+  // List of input connections
+  enum SRPRNNOperation {
+    ADD = 0;
+    MUL = 1;
+  }
+  optional SRPRNNOperation operation = 5 [default = ADD];
+  repeated SRPRNNInput input = 6;
+  // Bias restrictions
+  enum SRPRNNBiasRestriction {
+  	FREE = 0;
+  	FIXED_SIGN = 1;
+  	FIXED_VALUE = 2;
+  }
+  optional SRPRNNBiasRestriction bias_restriction = 7 [default = FREE];
+}
+
+message SRPRNNInput {
+  // Name of the source neuron
+  optional string name = 1 [default = ""];
+  // Initial connection weight
+  optional float weight = 2 [default = 0.0];
+  // Temporal offset
+  optional int64 temp_offset = 3 [default = 0];
+  // Spatial offset defined once per grid dimension
+  repeated int64 offset = 4;
+  // Weight restrictions
+  enum SRPRNNWeightRestriction {
+  	FREE = 0;
+  	FIXED_SIGN = 1;
+  	FIXED_VALUE = 2;
+  }
+  optional SRPRNNWeightRestriction weight_restriction = 5 [default = FREE];
 }
 
 message MergeCropParameter {
