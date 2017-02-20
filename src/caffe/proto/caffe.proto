@@ -412,6 +412,7 @@ message LayerParameter {
   optional MergeCropParameter mergecrop_param = 147;
   optional AffinityParameter affinity_param = 148;
   optional SRPRNNParameter srprnn_param = 149;
+  optional CoordParameter coord_param = 150;
 }
 
 // Message that stores parameters used to apply transformation
@@ -1427,12 +1428,30 @@ message AffinityParameter {
   repeated int64 offset = 1;
 }
 
+enum GridType {
+  CARTESIAN = 0;
+  HEXTILES = 1;
+}
+
+message CoordParameter {
+  enum InterpolMode {
+    NEAREST = 0;
+    BILINEAR = 1;
+  }
+  enum ScaleMode {
+    MAX = 0;
+    MIN = 1;
+  }
+  optional GridType srcgrid = 1 [default = CARTESIAN];
+  optional GridType dstgrid = 2 [default = CARTESIAN];
+  optional int64 outheight = 3 [default = 0];
+  optional int64 outwidth = 4 [default = 0];
+  repeated int64 outdim = 5;
+  optional InterpolMode interpol = 6 [default = BILINEAR];
+  optional ScaleMode scale = 7 [default = MAX];
+}
 
 message SRPRNNParameter {
-  enum GridType {
-  	CARTESIAN = 0;
-  	HEXTILES = 1;
-  }
   optional GridType grid = 1 [default = CARTESIAN];
   optional int64 backprop_steps = 2 [default = 0];
   // List of network input neurons (feature maps)
