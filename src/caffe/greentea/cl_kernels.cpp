@@ -190,7 +190,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "Dtype v = variance[idx_chans];",    // NOLINT
 "",    // NOLINT
 "m = -scale * m;",    // NOLINT
-"v = native_powr((Dtype)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
+"v = (Dtype)native_powr((float)mad(scale, v, eps), (float)-0.5);",    // NOLINT
 "",    // NOLINT
 "const int_tp out_off = (idx_num * channels + idx_chans) * spatial_dim + idx_spatial_dim;",    // NOLINT
 "top[out_off] = v * (top[out_off] + m);",    // NOLINT
@@ -210,7 +210,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "Dtype v = variance[idx_chans];",    // NOLINT
 "",    // NOLINT
 "m = -scale * m;",    // NOLINT
-"v = native_powr((Dtype)mad(scale, v, eps), (Dtype)-0.5);",    // NOLINT
+"v = (Dtype)native_powr((float)mad(scale, v, eps), (float)-0.5);",    // NOLINT
 "",    // NOLINT
 "const int_tp out_off = (idx_num * channels + idx_chans) * spatial_dim + idx_spatial_dim;",    // NOLINT
 "top[out_off] = v * (bottom[out_off] + m);",    // NOLINT
@@ -4139,7 +4139,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "* in_off[(head - size) * step];",    // NOLINT
 "}",    // NOLINT
 "scale_val = k + accum_scale * alpha_over_size;",    // NOLINT
-"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * native_powr(scale_val, negative_beta);",    // NOLINT
+"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * (Dtype)native_powr((float)scale_val, (float)negative_beta);",    // NOLINT
 "++head;",    // NOLINT
 "}",    // NOLINT
 "// subtract only",    // NOLINT
@@ -4149,7 +4149,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "* in_off[(head - size) * step];",    // NOLINT
 "}",    // NOLINT
 "scale_val = k + accum_scale * alpha_over_size;",    // NOLINT
-"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * native_powr(scale_val, negative_beta);",    // NOLINT
+"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * (Dtype)native_powr((float)scale_val, (float)negative_beta);",    // NOLINT
 "++head;",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
