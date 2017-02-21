@@ -13,10 +13,10 @@
 #endif  // DISABLE_DOUBLE_SUPPORT
 namespace caffe {
 #ifdef USE_INDEX_64
-static std::string header = DOUBLE_SUPPORT "#ifndef __OPENCL_VERSION__\n#define __kernel\n#define __global\n#define __constant\n#define __local\n#define get_global_id(x) 0\n#define get_global_size(x) 0\n#define get_local_id(x) 0\n#define get_local_size(x) 0\n#define FLT_MAX 0\n#define FLT_MIN 0\n#define cl_khr_fp64\n#define cl_amd_fp64\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#define CLK_LOCAL_MEM_FENCE\n#define CLK_GLOBAL_MEM_FENCE\n#define Dtype float\n#define barrier(x)\n#define atomic_cmpxchg(x, y, z) x\n#define signbit(x) x\n#define int_tp long\n#define uint_tp unsigned long\n#define int_tpc long\n#define uint_tpc unsigned long\n#endif\n\n#define CONCAT(A,B) A##_##B\n#define TEMPLATE(name,type) CONCAT(name,type)\n\n#define TYPE_FLOAT 1\n#define TYPE_DOUBLE 2\n\n#if defined(cl_khr_fp64)\n#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#elif defined(cl_amd_fp64)\n#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#endif\n\n#if defined(cl_khr_int64_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable\n#define ATOMICS_64_AVAILABLE\n#endif\n\n#if defined(cl_khr_int32_base_atomics)\n#pragma OPENCL_EXTENSION cl_khr_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif\n\n#if defined(cl_khr_global_int32_base_atomics)\n#pragma OPENCL_EXTENSION cl_khr_global_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif";  // NOLINT
+static std::string header = DOUBLE_SUPPORT "#ifndef __OPENCL_VERSION__\n#define __kernel\n#define __global\n#define __constant\n#define __local\n#define get_global_id(x) 0\n#define get_global_size(x) 0\n#define get_local_id(x) 0\n#define get_local_size(x) 0\n#define FLT_MAX 0\n#define FLT_MIN 0\n#define cl_khr_fp64\n#define cl_amd_fp64\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#define CLK_LOCAL_MEM_FENCE\n#define CLK_GLOBAL_MEM_FENCE\n#define Dtype float\n#define barrier(x)\n#define atomic_cmpxchg(x, y, z) x\n#define signbit(x) x\n#define int_tp long\n#define uint_tp unsigned long\n#define int_tpc long\n#define uint_tpc unsigned long\n#endif\n\n#define CONCAT(A,B) A##_##B\n#define TEMPLATE(name,type) CONCAT(name,type)\n\n#define TYPE_FLOAT 1\n#define TYPE_DOUBLE 2\n\n#if defined(cl_khr_fp64)\n#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#elif defined(cl_amd_fp64)\n#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#endif\n\n#if defined(cl_khr_int64_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable\n#define ATOMICS_64_AVAILABLE\n#endif\n\n#if defined(cl_khr_int32_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif\n\n#if defined(cl_khr_global_int32_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif";  // NOLINT
 static std::string definitions_64 = DOUBLE_SUPPORT "// Types used for parameters, offset computations and so on\n#define int_tp long\n#define uint_tp unsigned long\n\n// Definitions used to cast the types above as needed\n#define int_tpc long\n#define uint_tpc unsigned long";  // NOLINT
 #else
-static std::string header = DOUBLE_SUPPORT "#ifndef __OPENCL_VERSION__\n#define __kernel\n#define __global\n#define __constant\n#define __local\n#define get_global_id(x) 0\n#define get_global_size(x) 0\n#define get_local_id(x) 0\n#define get_local_size(x) 0\n#define FLT_MAX 0\n#define FLT_MIN 0\n#define cl_khr_fp64\n#define cl_amd_fp64\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#define CLK_LOCAL_MEM_FENCE\n#define CLK_GLOBAL_MEM_FENCE\n#define Dtype float\n#define barrier(x)\n#define atomic_cmpxchg(x, y, z) x\n#define signbit(x) x\n#define int_tp long\n#define uint_tp unsigned long\n#define int_tpc long\n#define uint_tpc unsigned long\n#endif\n\n#define CONCAT(A,B) A##_##B\n#define TEMPLATE(name,type) CONCAT(name,type)\n\n#define TYPE_FLOAT 1\n#define TYPE_DOUBLE 2\n\n#if defined(cl_khr_fp64)\n#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#elif defined(cl_amd_fp64)\n#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#endif\n\n#if defined(cl_khr_int64_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable\n#define ATOMICS_64_AVAILABLE\n#endif\n\n#if defined(cl_khr_int32_base_atomics)\n#pragma OPENCL_EXTENSION cl_khr_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif\n\n#if defined(cl_khr_global_int32_base_atomics)\n#pragma OPENCL_EXTENSION cl_khr_global_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif";  // NOLINT
+static std::string header = DOUBLE_SUPPORT "#ifndef __OPENCL_VERSION__\n#define __kernel\n#define __global\n#define __constant\n#define __local\n#define get_global_id(x) 0\n#define get_global_size(x) 0\n#define get_local_id(x) 0\n#define get_local_size(x) 0\n#define FLT_MAX 0\n#define FLT_MIN 0\n#define cl_khr_fp64\n#define cl_amd_fp64\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#define CLK_LOCAL_MEM_FENCE\n#define CLK_GLOBAL_MEM_FENCE\n#define Dtype float\n#define barrier(x)\n#define atomic_cmpxchg(x, y, z) x\n#define signbit(x) x\n#define int_tp long\n#define uint_tp unsigned long\n#define int_tpc long\n#define uint_tpc unsigned long\n#endif\n\n#define CONCAT(A,B) A##_##B\n#define TEMPLATE(name,type) CONCAT(name,type)\n\n#define TYPE_FLOAT 1\n#define TYPE_DOUBLE 2\n\n#if defined(cl_khr_fp64)\n#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#elif defined(cl_amd_fp64)\n#pragma OPENCL EXTENSION cl_amd_fp64 : enable\n#ifndef DISABLE_DOUBLE_SUPPORT\n#define DOUBLE_SUPPORT_AVAILABLE\n#endif //DISABLE_DOUBLE_SUPPORT\n#endif\n\n#if defined(cl_khr_int64_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable\n#define ATOMICS_64_AVAILABLE\n#endif\n\n#if defined(cl_khr_int32_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif\n\n#if defined(cl_khr_global_int32_base_atomics)\n#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable\n#define ATOMICS_32_AVAILABLE\n#endif";  // NOLINT
 static std::string definitions_32 = DOUBLE_SUPPORT "// Types used for parameters, offset computations and so on\n#define int_tp int\n#define uint_tp unsigned int\n\n// Definitions used to cast the types above as needed\n#define int_tpc int\n#define uint_tpc unsigned int";  // NOLINT
 #endif
 static std::vector<std::vector<std::string>> cl_kernels{
@@ -1950,6 +1950,671 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "}",    // NOLINT
 "",    // NOLINT
 "",    // NOLINT
+""},   // NOLINT
+    {"#ifndef __OPENCL_VERSION__",    // NOLINT
+"#include \"header.cl\"",    // NOLINT
+"#endif",    // NOLINT
+"",    // NOLINT
+"#define INTERPOL_NEAREST    0",    // NOLINT
+"#define INTERPOL_BILINEAR   1",    // NOLINT
+"",    // NOLINT
+"#define TYPE_CARTESIAN      0",    // NOLINT
+"#define TYPE_HEXGRID        1",    // NOLINT
+"",    // NOLINT
+"// NOLINT_NEXT_LINE(readability/fn_size)",    // NOLINT
+"__kernel void TEMPLATE(coord_interpolation,Dtype)(",    // NOLINT
+"const int_tp nthreads,",    // NOLINT
+"__global const Dtype* bottom_data,",    // NOLINT
+"const int_tp srcheight,",    // NOLINT
+"const int_tp srcwidth,",    // NOLINT
+"const int_tp srctype,",    // NOLINT
+"const int_tp dstheight,",    // NOLINT
+"const int_tp dstwidth,",    // NOLINT
+"const int_tp dsttype,",    // NOLINT
+"const int_tp interpol,",    // NOLINT
+"const int_tp scale,",    // NOLINT
+"__global Dtype* top_data) {",    // NOLINT
+"for (int_tp index = get_global_id(0); index < nthreads;",    // NOLINT
+"index += get_global_size(0)) {",    // NOLINT
+"// Integer destination indexing",    // NOLINT
+"const int_tp w = index % dstwidth;",    // NOLINT
+"const int_tp h = (index / dstwidth) % dstheight;",    // NOLINT
+"",    // NOLINT
+"// Channels and batch are preserved",    // NOLINT
+"const int_tp c = (index / dstwidth / dstheight);",    // NOLINT
+"",    // NOLINT
+"Dtype value = (Dtype)0.0;",    // NOLINT
+"",    // NOLINT
+"// CARTESIAN => HEXGRID",    // NOLINT
+"if (srctype == TYPE_CARTESIAN && dsttype == TYPE_HEXGRID) {",    // NOLINT
+"Dtype cdstwidth = (Dtype)(dstwidth - 1)",    // NOLINT
+"* sqrt((Dtype)3.0)/((Dtype)2.0)",    // NOLINT
+"+ (Dtype)2.0*sqrt((Dtype)3.0)/((Dtype)3.0);",    // NOLINT
+"Dtype cdstheight = (Dtype)dstheight + (Dtype)0.5;",    // NOLINT
+"",    // NOLINT
+"Dtype fw = ((Dtype)srcwidth) / cdstwidth;",    // NOLINT
+"Dtype fh = ((Dtype)srcheight) / cdstheight;",    // NOLINT
+"Dtype fs = scale == 1 ? min(fw, fh) : max(fw, fh);",    // NOLINT
+"",    // NOLINT
+"// (v,u) cartesian coordinates of hextile (h,w) centerpoint",    // NOLINT
+"Dtype u = (Dtype)w * (sqrt((Dtype)3.0)/((Dtype)2.0));",    // NOLINT
+"Dtype v = (Dtype)0.5 * (Dtype)w + (Dtype)h;",    // NOLINT
+"if (v >= dstheight - 0.25) {",    // NOLINT
+"v = v - dstheight;",    // NOLINT
+"}",    // NOLINT
+"u = u + sqrt((Dtype)3.0)/((Dtype)3.0);",    // NOLINT
+"v = v + (Dtype)0.5;",    // NOLINT
+"",    // NOLINT
+"if (interpol == INTERPOL_NEAREST) {",    // NOLINT
+"int_tp x = (int_tp)round(u*fs);",    // NOLINT
+"int_tp y = (int_tp)round(v*fs);",    // NOLINT
+"if (x < 0 || y < 0 || x >= srcwidth || y >= srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x+(y+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"if (interpol == INTERPOL_BILINEAR) {",    // NOLINT
+"if (fs > (Dtype)2.0) {",    // NOLINT
+"int_tp count = 0;",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"int_tp x = (int_tp)round(u*fs);",    // NOLINT
+"int_tp y = (int_tp)round(v*fs);",    // NOLINT
+"if (x < 0 || y < 0 || x >= srcwidth || y >= srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"for (int_tp iy = (int_tp)floor((v-sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"iy < (int_tp)ceil((v+sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"++iy) {",    // NOLINT
+"for (int_tp ix = (int_tp)floor((u-sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"ix < (int_tp)ceil((u+sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"++ix) {",    // NOLINT
+"if (!(ix < 0 || iy < 0 || ix >= srcwidth || iy >= srcheight) &&",    // NOLINT
+"(((Dtype)1.0)/((Dtype)3.0)*pow(fs, (Dtype)2.0)",    // NOLINT
+">= pow((Dtype)ix-u*fs, (Dtype)2.0) +",    // NOLINT
+"pow((Dtype)iy-v*fs, (Dtype)2.0))) {",    // NOLINT
+"value += bottom_data[ix+(iy+c*srcheight)*srcwidth];",    // NOLINT
+"++count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (count > 0) {",    // NOLINT
+"value /= (Dtype)count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (fs <= (Dtype)2.0) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(u*fs);",    // NOLINT
+"int_tp y0 = (int_tp)floor(v*fs);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(u*fs);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(v*fs);",    // NOLINT
+"Dtype v0 = (Dtype)0.0;",    // NOLINT
+"Dtype v1 = (Dtype)0.0;",    // NOLINT
+"Dtype v2 = (Dtype)0.0;",    // NOLINT
+"Dtype v3 = (Dtype)0.0;",    // NOLINT
+"if (y0 >= 0 && y0 < srcheight) {",    // NOLINT
+"if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
+"v0 = bottom_data[x0+(y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
+"v1 = bottom_data[x1+(y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (y1 >= 0 && y1 < srcheight) {",    // NOLINT
+"if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
+"v2 = bottom_data[x0+(y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
+"v3 = bottom_data[x1+(y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"Dtype w0 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x0-u*fs)",    // NOLINT
+"/ (Dtype)abs(x1-x0);",    // NOLINT
+"Dtype w1 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x1-u*fs)",    // NOLINT
+"/ (Dtype)abs(x1-x0);",    // NOLINT
+"Dtype w2 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y0-v*fs)",    // NOLINT
+"/ (Dtype)abs(y1-y0);",    // NOLINT
+"Dtype w3 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y1-v*fs)",    // NOLINT
+"/ (Dtype)abs(y1-y0);",    // NOLINT
+"value = (v0*w1+v1*w0)*w3+(v2*w1+v3*w0)*w2;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"// HEXGRID => CARTESIAN",    // NOLINT
+"if (srctype == TYPE_HEXGRID && dsttype == TYPE_CARTESIAN) {",    // NOLINT
+"Dtype csrcwidth = (Dtype)(srcwidth - 1)*sqrt((Dtype)3.0)/((Dtype)2.0) +",    // NOLINT
+"(Dtype)2.0*sqrt((Dtype)3.0)/((Dtype)3.0);",    // NOLINT
+"Dtype csrcheight = (Dtype)srcheight + (Dtype)0.5;",    // NOLINT
+"",    // NOLINT
+"Dtype fw = csrcwidth / ((Dtype)dstwidth);",    // NOLINT
+"Dtype fh = csrcheight / ((Dtype)dstheight);",    // NOLINT
+"Dtype fs = scale == 1 ? min(fw, fh) : max(fw, fh);",    // NOLINT
+"",    // NOLINT
+"// (v,u) hextile coordinates of cartesian (h,w) centerpoint",    // NOLINT
+"Dtype u = ((Dtype)w * fs - sqrt((Dtype)3.0)/((Dtype)3.0))",    // NOLINT
+"/ (sqrt((Dtype)3.0)/((Dtype)2.0));",    // NOLINT
+"Dtype v = ((Dtype)h * fs - (Dtype)0.5) - (Dtype)0.5 * u;",    // NOLINT
+"",    // NOLINT
+"if (interpol == INTERPOL_NEAREST) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(u);",    // NOLINT
+"int_tp y0 = (int_tp)floor(v);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(u);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(v);",    // NOLINT
+"Dtype w0 = pow((u-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w1 = pow((u-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"Dtype w2 = pow((u-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w3 = pow((u-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"int_tp yshift0 = 0;",    // NOLINT
+"int_tp yshift1 = 0;",    // NOLINT
+"int_tp yshift2 = 0;",    // NOLINT
+"int_tp yshift3 = 0;",    // NOLINT
+"if ((y0 < 0) && (2*y0+x0 >= 0)) {",    // NOLINT
+"yshift0 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y0 < 0) && (2*y0+x1 >= 0)) {",    // NOLINT
+"yshift1 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x0 >= 0)) {",    // NOLINT
+"yshift2 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x1 >= 0)) {",    // NOLINT
+"yshift3 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"Dtype rw = 1.0;",    // NOLINT
+"if (w0 < rw && w0 < (Dtype)1.0) {",    // NOLINT
+"if (x0 < 0 || (y0+yshift0) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y0+yshift0) >= srcheight || 2*y0+x0 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x0+(yshift0+y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w0;",    // NOLINT
+"}",    // NOLINT
+"if (w1 < rw && w1 < (Dtype)1.0) {",    // NOLINT
+"if (x1 < 0 || (y0+yshift1) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y0+yshift1) >= srcheight || 2*y0+x1 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x1+(yshift1+y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w1;",    // NOLINT
+"}",    // NOLINT
+"if (w2 < rw && w2 < (Dtype)1.0) {",    // NOLINT
+"if (x0 < 0 || (y1+yshift2) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y1+yshift2) >= srcheight || 2*y1+x0 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x0+(yshift2+y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w2;",    // NOLINT
+"}",    // NOLINT
+"if (w3 < rw && w3 < (Dtype)1.0) {",    // NOLINT
+"if (x1 < 0 || (y1+yshift3) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y1+yshift3) >= srcheight || 2*y1+x1 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x1+(yshift3+y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w3;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"if (interpol == INTERPOL_BILINEAR) {",    // NOLINT
+"if (fs > (Dtype)2.0) {",    // NOLINT
+"int_tp count = 0;",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"int_tp x = (int_tp)round(u);",    // NOLINT
+"int_tp y = (int_tp)round(v);",    // NOLINT
+"int_tp yshift = 0;",    // NOLINT
+"if ((y < 0) && (2*y+x >= 0)) {",    // NOLINT
+"yshift = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if (x < 0 || (y+yshift) < 0 || x >= srcwidth ||",    // NOLINT
+"(y+yshift) >= srcheight || 2*y+x >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"for (int_tp ix = (int_tp)floor(u-fs/(sqrt((Dtype)3.0)));",    // NOLINT
+"ix < (int_tp)ceil(u+fs/(sqrt((Dtype)3.0)));",    // NOLINT
+"++ix) {",    // NOLINT
+"for (int_tp iy = (int_tp)floor(v-fs*(sqrt((Dtype)3.0) -",    // NOLINT
+"(Dtype)1.0)/((Dtype)2.0*sqrt((Dtype)3.0)));",    // NOLINT
+"iy < (int_tp)ceil(v+fs*(sqrt((Dtype)3.0) -",    // NOLINT
+"(Dtype)1.0)/((Dtype)2.0*sqrt((Dtype)3.0)));",    // NOLINT
+"++iy) {",    // NOLINT
+"Dtype w = pow((u-(Dtype)ix) * sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)iy+(Dtype)0.5*(Dtype)ix), (Dtype)2.0);",    // NOLINT
+"if ((iy < 0) && (2*iy+ix >= 0)) {",    // NOLINT
+"yshift = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if (pow(fs/(Dtype)2.0, (Dtype)2.0) >= w &&",    // NOLINT
+"!(ix < 0 || (iy+yshift) < 0 || ix >= srcwidth ||",    // NOLINT
+"(iy+yshift) >= srcheight || 2*iy+ix >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[ix+(iy+yshift+c*srcheight)*srcwidth];",    // NOLINT
+"++count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (count > 0) {",    // NOLINT
+"value /= (Dtype)count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (fs <= (Dtype)2.0) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(u);",    // NOLINT
+"int_tp y0 = (int_tp)floor(v);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(u);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(v);",    // NOLINT
+"Dtype w0 = pow((u-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w1 = pow((u-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"Dtype w2 = pow((u-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w3 = pow((u-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v+(Dtype)0.5*u) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"if (w0 > w1 && w0 > w2 && w0 > w3) {",    // NOLINT
+"w0 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"if (w1 > w0 && w1 > w2 && w1 > w3) {",    // NOLINT
+"w1 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"if (w2 > w1 && w2 > w0 && w2 > w3) {",    // NOLINT
+"w2 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"if (w3 > w1 && w3 > w2 && w3 > w0) {",    // NOLINT
+"w3 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"int_tp yshift0 = 0;",    // NOLINT
+"int_tp yshift1 = 0;",    // NOLINT
+"int_tp yshift2 = 0;",    // NOLINT
+"int_tp yshift3 = 0;",    // NOLINT
+"if ((y0 < 0) && (2*y0+x0 >= 0)) {",    // NOLINT
+"yshift0 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y0 < 0) && (2*y0+x1 >= 0)) {",    // NOLINT
+"yshift1 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x0 >= 0)) {",    // NOLINT
+"yshift2 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x1 >= 0)) {",    // NOLINT
+"yshift3 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"Dtype rw = 0.0;",    // NOLINT
+"if (w0 < (Dtype)1.0) {",    // NOLINT
+"if (!(x0 < 0 || (y0+yshift0) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y0+yshift0) >= srcheight || 2*y0+x0 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x0+(yshift0+y0+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w0);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w0);",    // NOLINT
+"}",    // NOLINT
+"if (w1 < (Dtype)1.0) {",    // NOLINT
+"if (!(x1 < 0 || (y0+yshift1) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y0+yshift1) >= srcheight || 2*y0+x1 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x1+(yshift1+y0+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w1);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w1);",    // NOLINT
+"}",    // NOLINT
+"if (w2 < (Dtype)1.0) {",    // NOLINT
+"if (!(x0 < 0 || (y1+yshift2) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y1+yshift2) >= srcheight || 2*y1+x0 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x0+(yshift2+y1+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w2);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w2);",    // NOLINT
+"}",    // NOLINT
+"if (w3 < (Dtype)1.0) {",    // NOLINT
+"if (!(x1 < 0 || (y1+yshift3) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y1+yshift3) >= srcheight || 2*y1+x1 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x1+(yshift3+y1+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w3);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w3);",    // NOLINT
+"}",    // NOLINT
+"value /= rw;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"// CARTESIAN => CARTESIAN",    // NOLINT
+"if (srctype == TYPE_CARTESIAN && dsttype == TYPE_CARTESIAN) {",    // NOLINT
+"Dtype fw = ((Dtype)srcwidth) / ((Dtype)dstwidth);",    // NOLINT
+"Dtype fh = ((Dtype)srcheight) / ((Dtype)dstheight);",    // NOLINT
+"Dtype fs = scale == 1 ? min(fw, fh) : max(fw, fh);",    // NOLINT
+"if (interpol == INTERPOL_NEAREST) {",    // NOLINT
+"int_tp x = (int_tp)round(w*fs);",    // NOLINT
+"int_tp y = (int_tp)round(h*fs);",    // NOLINT
+"if (x < 0 || y < 0 || x >= srcwidth || y >= srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x+(y+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (interpol == INTERPOL_BILINEAR) {",    // NOLINT
+"if (fs > (Dtype)2.0) {",    // NOLINT
+"int_tp count = 0;",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"int_tp x = (int_tp)round(w*fs);",    // NOLINT
+"int_tp y = (int_tp)round(h*fs);",    // NOLINT
+"if (x < 0 || y < 0 || x >= srcwidth || y >= srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"for (int_tp iy = (int_tp)round(y-fs/((Dtype)2.0));",    // NOLINT
+"iy < (int_tp)round(y+fs/((Dtype)2.0));",    // NOLINT
+"++iy) {",    // NOLINT
+"for (int_tp ix = (int_tp)round(x-fs/((Dtype)2.0));",    // NOLINT
+"ix < (int_tp)round(x+fs/((Dtype)2.0));",    // NOLINT
+"++ix) {",    // NOLINT
+"if (!(ix < 0 || iy < 0 || ix >= srcwidth || iy >= srcheight)) {",    // NOLINT
+"value += bottom_data[ix+(iy+c*srcheight)*srcwidth];",    // NOLINT
+"++count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (count > 0) {",    // NOLINT
+"value /= (Dtype)count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (fs <= (Dtype)2.0) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(w*fs);",    // NOLINT
+"int_tp y0 = (int_tp)floor(h*fs);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(w*fs);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(h*fs);",    // NOLINT
+"Dtype v0 = (Dtype)0.0;",    // NOLINT
+"Dtype v1 = (Dtype)0.0;",    // NOLINT
+"Dtype v2 = (Dtype)0.0;",    // NOLINT
+"Dtype v3 = (Dtype)0.0;",    // NOLINT
+"if (y0 >= 0 && y0 < srcheight) {",    // NOLINT
+"if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
+"v0 = bottom_data[x0+(y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
+"v1 = bottom_data[x1+(y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (y1 >= 0 && y1 < srcheight) {",    // NOLINT
+"if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
+"v2 = bottom_data[x0+(y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
+"v3 = bottom_data[x1+(y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"Dtype w0 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x0-w*fs)",    // NOLINT
+"/ (Dtype)abs(x1-x0);",    // NOLINT
+"Dtype w1 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x1-w*fs)",    // NOLINT
+"/ (Dtype)abs(x1-x0);",    // NOLINT
+"Dtype w2 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y0-h*fs)",    // NOLINT
+"/ (Dtype)abs(y1-y0);",    // NOLINT
+"Dtype w3 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y1-h*fs)",    // NOLINT
+"/ (Dtype)abs(y1-y0);",    // NOLINT
+"value = (v0*w1+v1*w0)*w3+(v2*w1+v3*w0)*w2;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"// HEXGRID => HEXGRID",    // NOLINT
+"if (srctype == TYPE_HEXGRID && dsttype == TYPE_HEXGRID) {",    // NOLINT
+"Dtype csrcwidth = (Dtype)(srcwidth - 1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0) + (Dtype)2.0*sqrt((Dtype)3.0)/((Dtype)3.0);",    // NOLINT
+"Dtype csrcheight = (Dtype)srcheight + (Dtype)0.5;",    // NOLINT
+"Dtype cdstwidth = (Dtype)(dstwidth - 1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0) + (Dtype)2.0*sqrt((Dtype)3.0)/((Dtype)3.0);",    // NOLINT
+"Dtype cdstheight = (Dtype)dstheight + (Dtype)0.5;",    // NOLINT
+"Dtype fw = ((Dtype)csrcwidth) / ((Dtype)cdstwidth);",    // NOLINT
+"Dtype fh = ((Dtype)csrcheight) / ((Dtype)cdstheight);",    // NOLINT
+"Dtype fs = scale == 1 ? min(fw, fh) : max(fw, fh);",    // NOLINT
+"",    // NOLINT
+"Dtype u0 = (Dtype)w * (sqrt((Dtype)3.0)/((Dtype)2.0));",    // NOLINT
+"Dtype v0 = (Dtype)0.5 * (Dtype)w + (Dtype)h;",    // NOLINT
+"if (v0 >= dstheight - 0.25) {",    // NOLINT
+"v0 = v0 - dstheight;",    // NOLINT
+"}",    // NOLINT
+"u0 = u0 + sqrt((Dtype)3.0)/((Dtype)3.0);",    // NOLINT
+"v0 = v0 + (Dtype)0.5;",    // NOLINT
+"",    // NOLINT
+"Dtype u1 = ((Dtype)u0 * fs - sqrt((Dtype)3.0)/((Dtype)3.0))",    // NOLINT
+"/ (sqrt((Dtype)3.0)/((Dtype)2.0));",    // NOLINT
+"Dtype v1 = ((Dtype)v0 * fs - (Dtype)0.5) - (Dtype)0.5 * u1;",    // NOLINT
+"",    // NOLINT
+"if (interpol == INTERPOL_NEAREST) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(u1);",    // NOLINT
+"int_tp y0 = (int_tp)floor(v1);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(u1);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(v1);",    // NOLINT
+"Dtype w0 = pow((u1-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w1 = pow((u1-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"Dtype w2 = pow((u1-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w3 = pow((u1-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"int_tp yshift0 = 0;",    // NOLINT
+"int_tp yshift1 = 0;",    // NOLINT
+"int_tp yshift2 = 0;",    // NOLINT
+"int_tp yshift3 = 0;",    // NOLINT
+"if ((y0 < 0) && (2*y0+x0 >= 0)) {",    // NOLINT
+"yshift0 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y0 < 0) && (2*y0+x1 >= 0)) {",    // NOLINT
+"yshift1 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x0 >= 0)) {",    // NOLINT
+"yshift2 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x1 >= 0)) {",    // NOLINT
+"yshift3 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"Dtype rw = 1.0;",    // NOLINT
+"if (w0 < rw && w0 < (Dtype)1.0) {",    // NOLINT
+"if (x0 < 0 || (y0+yshift0) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y0+yshift0) >= srcheight || 2*y0+x0 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x0+(yshift0+y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w0;",    // NOLINT
+"}",    // NOLINT
+"if (w1 < rw && w1 < (Dtype)1.0) {",    // NOLINT
+"if (x1 < 0 || (y0+yshift1) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y0+yshift1) >= srcheight || 2*y0+x1 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x1+(yshift1+y0+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w1;",    // NOLINT
+"}",    // NOLINT
+"if (w2 < rw && w2 < (Dtype)1.0) {",    // NOLINT
+"if (x0 < 0 || (y1+yshift2) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y1+yshift2) >= srcheight || 2*y1+x0 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x0+(yshift2+y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w2;",    // NOLINT
+"}",    // NOLINT
+"if (w3 < rw && w3 < (Dtype)1.0) {",    // NOLINT
+"if (x1 < 0 || (y1+yshift3) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y1+yshift3) >= srcheight || 2*y1+x1 >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"value = bottom_data[x1+(yshift3+y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"rw = w3;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (interpol == INTERPOL_BILINEAR) {",    // NOLINT
+"if (fs > (Dtype)2.0) {",    // NOLINT
+"int_tp count = 0;",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"int_tp x = (int_tp)round(u1);",    // NOLINT
+"int_tp y = (int_tp)round(v1);",    // NOLINT
+"int_tp yshift = 0;",    // NOLINT
+"if ((y < 0) && (2*y+x >= 0)) {",    // NOLINT
+"yshift = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if (x < 0 || (y+yshift) < 0 || x >= srcwidth ||",    // NOLINT
+"(y+yshift) >= srcheight || 2*y+x >= 2*srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"for (int_tp ix = (int_tp)floor(u1-fs/(sqrt((Dtype)3.0)));",    // NOLINT
+"ix < (int_tp)ceil(u1+fs/(sqrt((Dtype)3.0)));",    // NOLINT
+"++ix) {",    // NOLINT
+"for (int_tp iy = (int_tp)floor(v1-fs*(sqrt((Dtype)3.0)-(Dtype)1.0)",    // NOLINT
+"/ ((Dtype)2.0*sqrt((Dtype)3.0)));",    // NOLINT
+"iy < (int_tp)ceil(v1+fs*(sqrt((Dtype)3.0)-(Dtype)1.0)",    // NOLINT
+"/ ((Dtype)2.0*sqrt((Dtype)3.0)));",    // NOLINT
+"++iy) {",    // NOLINT
+"Dtype w = pow((u1-(Dtype)ix)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)iy+(Dtype)0.5*(Dtype)ix), (Dtype)2.0);",    // NOLINT
+"if ((iy < 0) && (2*iy+ix >= 0)) {",    // NOLINT
+"yshift = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if (pow(fs/(Dtype)2.0, (Dtype)2.0) >= w &&",    // NOLINT
+"!(ix < 0 || (iy+yshift) < 0 || ix >= srcwidth ||",    // NOLINT
+"(iy+yshift) >= srcheight || 2*iy+ix >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[ix+(iy+yshift+c*srcheight)*srcwidth];",    // NOLINT
+"++count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (count > 0) {",    // NOLINT
+"value /= (Dtype)count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (fs <= (Dtype)2.0) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(u1);",    // NOLINT
+"int_tp y0 = (int_tp)floor(v1);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(u1);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(v1);",    // NOLINT
+"Dtype w0 = pow((u1-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w1 = pow((u1-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y0+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"Dtype w2 = pow((u1-(Dtype)x0)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x0), (Dtype)2.0);",    // NOLINT
+"Dtype w3 = pow((u1-(Dtype)x1)*sqrt((Dtype)3.0)",    // NOLINT
+"/ ((Dtype)2.0), (Dtype)2.0) +",    // NOLINT
+"pow((v1+(Dtype)0.5*u1) -",    // NOLINT
+"((Dtype)y1+(Dtype)0.5*(Dtype)x1), (Dtype)2.0);",    // NOLINT
+"if (w0 > w1 && w0 > w2 && w0 > w3) {",    // NOLINT
+"w0 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"if (w1 > w0 && w1 > w2 && w1 > w3) {",    // NOLINT
+"w1 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"if (w2 > w1 && w2 > w0 && w2 > w3) {",    // NOLINT
+"w2 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"if (w3 > w1 && w3 > w2 && w3 > w0) {",    // NOLINT
+"w3 = (Dtype)2.0;",    // NOLINT
+"}",    // NOLINT
+"int_tp yshift0 = 0;",    // NOLINT
+"int_tp yshift1 = 0;",    // NOLINT
+"int_tp yshift2 = 0;",    // NOLINT
+"int_tp yshift3 = 0;",    // NOLINT
+"if ((y0 < 0) && (2*y0+x0 >= 0)) {",    // NOLINT
+"yshift0 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y0 < 0) && (2*y0+x1 >= 0)) {",    // NOLINT
+"yshift1 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x0 >= 0)) {",    // NOLINT
+"yshift2 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"if ((y1 < 0) && (2*y1+x1 >= 0)) {",    // NOLINT
+"yshift3 = srcheight;",    // NOLINT
+"}",    // NOLINT
+"Dtype rw = 0.0;",    // NOLINT
+"if (w0 < (Dtype)1.0) {",    // NOLINT
+"if (!(x0 < 0 || (y0+yshift0) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y0+yshift0) >= srcheight || 2*y0+x0 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x0+(yshift0+y0+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w0);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w0);",    // NOLINT
+"}",    // NOLINT
+"if (w1 < (Dtype)1.0) {",    // NOLINT
+"if (!(x1 < 0 || (y0+yshift1) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y0+yshift1) >= srcheight || 2*y0+x1 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x1+(yshift1+y0+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w1);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w1);",    // NOLINT
+"}",    // NOLINT
+"if (w2 < (Dtype)1.0) {",    // NOLINT
+"if (!(x0 < 0 || (y1+yshift2) < 0 || x0 >= srcwidth ||",    // NOLINT
+"(y1+yshift2) >= srcheight || 2*y1+x0 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x0+(yshift2+y1+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w2);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w2);",    // NOLINT
+"}",    // NOLINT
+"if (w3 < (Dtype)1.0) {",    // NOLINT
+"if (!(x1 < 0 || (y1+yshift3) < 0 || x1 >= srcwidth ||",    // NOLINT
+"(y1+yshift3) >= srcheight || 2*y1+x1 >= 2*srcheight)) {",    // NOLINT
+"value += bottom_data[x1+(yshift3+y1+c*srcheight)*srcwidth]",    // NOLINT
+"* ((Dtype)1.0-w3);",    // NOLINT
+"}",    // NOLINT
+"rw += ((Dtype)1.0-w3);",    // NOLINT
+"}",    // NOLINT
+"value /= rw;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"top_data[index] = value;",    // NOLINT
+"}",    // NOLINT
+"}  // NOLINT(readability/fn_size)",    // NOLINT
 ""},   // NOLINT
     {"#ifndef __OPENCL_VERSION__",    // NOLINT
 "#include \"header.cl\"",    // NOLINT
@@ -5179,6 +5844,7 @@ static std::string cl_kernel_names[] = {
     "contrastive_loss",   // NOLINT
     "conv_layer_spatial",   // NOLINT
     "conv_spatial_helper",   // NOLINT
+    "coord_interpolation",   // NOLINT
     "crop",   // NOLINT
     "dropout",   // NOLINT
     "eltwise",   // NOLINT
