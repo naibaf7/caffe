@@ -4193,7 +4193,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "}",    // NOLINT
 "scale_val = k + accum_scale * alpha_over_size;",    // NOLINT
 "scale_off[(head - post_pad) * step] = scale_val;",    // NOLINT
-"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * native_powr(scale_val, negative_beta);",    // NOLINT
+"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * (Dtype)native_powr((float)scale_val, (float)negative_beta);",    // NOLINT
 "++head;",    // NOLINT
 "}",    // NOLINT
 "// subtract only",    // NOLINT
@@ -4204,7 +4204,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "}",    // NOLINT
 "scale_val = k + accum_scale * alpha_over_size;",    // NOLINT
 "scale_off[(head - post_pad) * step] = scale_val;",    // NOLINT
-"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * native_powr(scale_val, negative_beta);",    // NOLINT
+"out_off[(head - post_pad) * step] = in_off[(head - post_pad) * step] * (Dtype)native_powr((float)scale_val, (float)negative_beta);",    // NOLINT
 "++head;",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
