@@ -1,10 +1,11 @@
 // Sparse repeated pattern recurrent neural network layer
 
 #include <algorithm>
+#include <string>
+#include <vector>
 #include "caffe/layers/srprnn_layer.hpp"
 
 namespace caffe {
-
 
 template<typename Dtype>
 SRPRNN<Dtype>::SRPRNN(SRPRNNConfig config) {
@@ -38,7 +39,9 @@ std::string SRPRNN<Dtype>::string_identifier() {
 }
 
 template<typename Dtype>
-void SRPRNN<Dtype>::Forward(const Dtype* bottom_data, const Dtype* weight,
+void SRPRNN<Dtype>::Forward(const Dtype* flag_data,
+                            const Dtype* bottom_data,
+                            const Dtype* weight,
                             const Dtype* bias, Dtype* top_data,
                             Dtype* export_data) {
   for (int_tp phase = 0; phase < phases_; ++phase) {
@@ -47,7 +50,8 @@ void SRPRNN<Dtype>::Forward(const Dtype* bottom_data, const Dtype* weight,
 }
 
 template<typename Dtype>
-void SRPRNN<Dtype>::Backward(const Dtype* top_data, const Dtype* top_diff,
+void SRPRNN<Dtype>::Backward(const Dtype* flag_data,
+                             const Dtype* top_data, const Dtype* top_diff,
                              const Dtype* weight, Dtype* weight_diff,
                              const Dtype* bias, Dtype* bias_diff,
                              const Dtype* bottom_data, Dtype* bottom_diff) {
@@ -58,24 +62,23 @@ void SRPRNN<Dtype>::Backward(const Dtype* top_data, const Dtype* top_diff,
 
 template<typename Dtype>
 void SRPRNN<Dtype>::ResetTime() {
-
 }
 
 template<typename Dtype>
 std::string SRPRNN<Dtype>::generate_fw_defs() {
   std::stringstream ss;
-  //LibDNN<Dtype>::add_def(ss, "v_imsi", );
-  //LibDNN<Dtype>::add_def(ss, "v_imso", );
-  //LibDNN<Dtype>::add_Def(ss, "v_imse", );
+  // LibDNN<Dtype>::add_def(ss, "v_imsi", );
+  // LibDNN<Dtype>::add_def(ss, "v_imso", );
+  // LibDNN<Dtype>::add_Def(ss, "v_imse", );
   return ss.str();
 }
 
 template<typename Dtype>
 std::string SRPRNN<Dtype>::generate_bw_defs() {
   std::stringstream ss;
-  //LibDNN<Dtype>::add_def(ss, "v_imsi", );
-  //LibDNN<Dtype>::add_def(ss, "v_imso", );
-  //LibDNN<Dtype>::add_Def(ss, "v_imse", );
+  // LibDNN<Dtype>::add_def(ss, "v_imsi", );
+  // LibDNN<Dtype>::add_def(ss, "v_imso", );
+  // LibDNN<Dtype>::add_Def(ss, "v_imse", );
   return ss.str();
 }
 
@@ -115,7 +118,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
     for (int_tp i = 0; i < config_.neurons.size(); ++i) {
       // Check if neuron hasn't been processed yet
       if (std::find(current_neurons.begin(), current_neurons.end(),
-                    config_.neurons[i].name) == current_neurons.end() ||
+                    config_.neurons[i].name) == current_neurons.end() &&
           std::find(processed_neurons.begin(), processed_neurons.end(),
                     config_.neurons[i].name) == current_neurons.end()) {
         // Check if all inputs to the neuron are already processed
@@ -124,15 +127,18 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
         ss_sub << "Dtype " << config_.neurons[i].name
                << "_reg = ";
         // Check if the neuron is an input neuron
-        if (std::find(config_.input_neurons.begin(), config_.input_neurons.end(),
-                      config_.neurons[i].name) == config_.input_neurons.end()) {
+        if (std::find(config_.input_neurons.begin(),
+                      config_.input_neurons.end(),
+                      config_.neurons[i].name) ==
+                          config_.input_neurons.end()) {
           ss_sub << "im_in[]" << std::endl;
         } else {
           ss_sub << "0.0;" << std::endl;
         }
         for (int_tp j = 0; j < config_.neurons[i].inputs.size(); ++j) {
           if (std::find(processed_neurons.begin(), processed_neurons.end(),
-                        config_.neurons[i].inputs[j].name) == processed_neurons.end()) {
+                        config_.neurons[i].inputs[j].name) ==
+                            processed_neurons.end()) {
             ss_sub << "" << std::endl;
             all_inputs_processed = false;
           }
@@ -150,8 +156,10 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
                  << "_reg;" << std::endl;
         }
         // Check if the neuron is an export neuron
-        if (std::find(config_.export_neurons.begin(), config_.export_neurons.end(),
-                      config_.neurons[i].name) == config_.export_neurons.end()) {
+        if (std::find(config_.export_neurons.begin(),
+                      config_.export_neurons.end(),
+                      config_.neurons[i].name) ==
+                          config_.export_neurons.end()) {
           ss_sub << "im_exp_ptr[] = " << config_.neurons[i].name
                  << "_reg;" << std::endl;
         }
@@ -159,15 +167,17 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
           // Add the neuron
           ss << ss_sub.str();
           current_neurons.push_back(config_.neurons[i].name);
+          std::cout << config_.neurons[i].name << std::endl;
         }
       }
     }
+    ss << "}" << std::endl;
     last_size = processed_neurons.size();
     processed_neurons.insert(processed_neurons.end(),
                              current_neurons.begin(),
                              current_neurons.end());
     ++phase;
-  } while(processed_neurons.size() < config_.neurons.size() ||
+  } while (processed_neurons.size() < config_.neurons.size() ||
       last_size != processed_neurons.size());
 
   phases_ = phase;
@@ -208,8 +218,8 @@ void SRPRNN<Dtype>::GenerateKernels() {
 template<typename Dtype>
 void SRPRNN<Dtype>::InitWeight(Dtype* cpu_weight_data) {
   int_tp off = 0;
-  for (int_tp i = 0; i < config_.neurons.size();++i) {
-    for (int_tp j = 0; j < config_.neurons[i].inputs.size();++j) {
+  for (int_tp i = 0; i < config_.neurons.size(); ++i) {
+    for (int_tp j = 0; j < config_.neurons[i].inputs.size(); ++j) {
       // Initial weight
       cpu_weight_data[off] = config_.neurons[i].inputs[j].weight;
       ++off;
@@ -219,12 +229,11 @@ void SRPRNN<Dtype>::InitWeight(Dtype* cpu_weight_data) {
 
 template<typename Dtype>
 void SRPRNN<Dtype>::InitBias(Dtype* cpu_bias_data) {
-  for (int_tp i = 0; i < config_.neurons.size();++i) {
+  for (int_tp i = 0; i < config_.neurons.size(); ++i) {
     // Initial bias
     cpu_bias_data[i] = config_.neurons[i].bias;
   }
 }
-
 
 
 INSTANTIATE_CLASS(SRPRNN);
@@ -244,7 +253,6 @@ void SRPRNNLayer<Dtype>::Reshape(
 
 
   if (srprnn_.get() == nullptr || shapes_changed) {
-
     SRPRNNConfig config;
     SRPRNNParameter param = this->layer_param().srprnn_param();
 
@@ -276,7 +284,7 @@ void SRPRNNLayer<Dtype>::Reshape(
         periodicity.push_back(neuron_param.periodicity(j));
         neuron.periodicity = periodicity;
       }
-      switch(neuron_param.operation()) {
+      switch (neuron_param.operation()) {
         case SRPRNNNeuron_SRPRNNOperation_ADD:
           neuron.operation = SRPRNN_OP_ADD;
           break;
@@ -284,7 +292,7 @@ void SRPRNNLayer<Dtype>::Reshape(
           neuron.operation = SRPRNN_OP_MUL;
           break;
       }
-      switch(neuron_param.activation()) {
+      switch (neuron_param.activation()) {
         case SRPRNNNeuron_SRPRNNActivation_ReLU:
           neuron.activation = SRPRNN_ACTIVATION_RELU;
           break;
@@ -313,6 +321,7 @@ void SRPRNNLayer<Dtype>::Reshape(
       }
       neurons.push_back(neuron);
     }
+    config.neurons = neurons;
 
     std::vector<std::string> input_neurons;
     for (int_tp i = 0; i < param.input_neuron_size(); ++i) {
@@ -338,12 +347,12 @@ void SRPRNNLayer<Dtype>::Reshape(
     config.backprop_steps = std::max((int_tp)param.backprop_steps(),
                                      (int_tp)max_temp_offset);
 
-    // Temporal dimension buffer size needs to be the number of backpropagation steps
-    // plus the batch size.
+    // Temporal dimension buffer size needs to be the number
+    // of backpropagation steps plus the batch size.
     config.temp_steps = config.backprop_steps + bottom[0]->shape(0);
 
     // Number of input neurons must match the feature maps
-    CHECK_EQ(config.neurons.size(), bottom[0]->shape(1));
+    CHECK_EQ(config.input_neurons.size(), bottom[0]->shape(1));
 
     // Weights for all synaptic connections
     std::vector<int_tp> weight_shape(1);
@@ -383,15 +392,15 @@ void SRPRNNLayer<Dtype>::Reshape(
 
 template<typename Dtype>
 void SRPRNNLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-                                          const vector<Blob<Dtype>*>& top) {
-	NOT_IMPLEMENTED;
+                                     const vector<Blob<Dtype>*>& top) {
+  NOT_IMPLEMENTED;
 }
 
 template<typename Dtype>
 void SRPRNNLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
-                                           const vector<bool>& propagate_down,
-                                           const vector<Blob<Dtype>*>& bottom) {
-	NOT_IMPLEMENTED;
+                                      const vector<bool>& propagate_down,
+                                      const vector<Blob<Dtype>*>& bottom) {
+  NOT_IMPLEMENTED;
 }
 
 #ifdef CPU_ONLY
@@ -407,19 +416,25 @@ void SRPRNNLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = top[0]->mutable_gpu_data();
 
+  const Dtype* flag_data = nullptr;
+  if (bottom.size() > 1) {
+    flag_data = bottom[1]->cpu_data();
+  }
+
   Dtype* export_data = nullptr;
 
   if (top.size() > 1) {
     export_data = top[1]->mutable_gpu_data();
   }
 
-  srprnn_.get()->Forward(bottom_data, weight, bias, top_data, export_data);
+  srprnn_.get()->Forward(flag_data, bottom_data, weight, bias, top_data,
+                         export_data);
 }
 
 template<typename Dtype>
 void SRPRNNLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
-                                           const vector<bool>& propagate_down,
-                                           const vector<Blob<Dtype>*>& bottom) {
+                                      const vector<bool>& propagate_down,
+                                      const vector<Blob<Dtype>*>& bottom) {
   const Dtype* weight = this->blobs_[0]->gpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_gpu_diff();
   const Dtype* bias = this->blobs_[1]->gpu_data();
@@ -430,12 +445,19 @@ void SRPRNNLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* bottom_diff = bottom[0]->mutable_gpu_diff();
 
-  srprnn_.get()->Backward(top_data, top_diff,
+  const Dtype* flag_data = nullptr;
+  if (bottom.size() > 1) {
+    flag_data = bottom[1]->cpu_data();
+  }
+
+  srprnn_.get()->Backward(flag_data,
+                          top_data, top_diff,
                           weight, weight_diff,
                           bias, bias_diff,
                           bottom_data, bottom_diff);
 }
 
 INSTANTIATE_CLASS(SRPRNNLayer);
+REGISTER_LAYER_CLASS(SRPRNN);
 
 }  // namespace caffe

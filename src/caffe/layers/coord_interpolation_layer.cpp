@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cfloat>
 #include <vector>
 
@@ -7,7 +8,8 @@
 namespace caffe {
 
 template <typename Dtype>
-void CoordInterpolationLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+void CoordInterpolationLayer<Dtype>::LayerSetUp(
+      const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   interp_mode_ = this->layer_param_.coord_param().interpol();
   scale_mode_ = this->layer_param_.coord_param().scale();
@@ -16,7 +18,8 @@ void CoordInterpolationLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bott
 }
 
 template <typename Dtype>
-void CoordInterpolationLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
+void CoordInterpolationLayer<Dtype>::Reshape(
+      const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   std::vector<int_tp> shape = bottom[0]->shape();
   if (this->layer_param_.coord_param().outdim_size() > 0) {
@@ -33,13 +36,16 @@ void CoordInterpolationLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 void CoordInterpolationLayer<Dtype>::Forward_cpu(
-    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+    const vector<Blob<Dtype>*>& bottom,
+    const vector<Blob<Dtype>*>& top) {
   NOT_IMPLEMENTED;
 }
 
 template <typename Dtype>
-void CoordInterpolationLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
-    const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+void CoordInterpolationLayer<Dtype>::Backward_cpu(
+    const vector<Blob<Dtype>*>& top,
+    const vector<bool>& propagate_down,
+    const vector<Blob<Dtype>*>& bottom) {
   NOT_IMPLEMENTED;
 }
 

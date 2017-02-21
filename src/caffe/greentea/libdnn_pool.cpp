@@ -8,8 +8,6 @@
 #include "caffe/greentea/libdnn.hpp"
 #include "caffe/util/benchmark.hpp"
 
-// #define LIBDNN_DEBUG 1
-
 namespace caffe {
 
 template<typename Dtype>

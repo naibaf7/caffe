@@ -1,6 +1,7 @@
 #ifndef CAFFE_SRPRNN_LAYER_HPP_
 #define CAFFE_SRPRNN_LAYER_HPP_
 
+#include <string>
 #include <vector>
 
 #include "caffe/blob.hpp"
@@ -82,10 +83,12 @@ class SRPRNN : public LibDNN<Dtype> {
   explicit SRPRNN(SRPRNNConfig config);
   void InitWeight(Dtype* cpu_weight_data);
   void InitBias(Dtype* cpu_bias_data);
-  void Forward(const Dtype* bottom_data, const Dtype* weight,
+  void Forward(const Dtype* flag_data,
+               const Dtype* bottom_data, const Dtype* weight,
                const Dtype* bias, Dtype* top_data,
                Dtype* export_data);
-  void Backward(const Dtype* top_data, const Dtype* top_diff,
+  void Backward(const Dtype* flag_data,
+                const Dtype* top_data, const Dtype* top_diff,
                 const Dtype* weight, Dtype* weight_diff,
                 const Dtype* bias, Dtype* bias_diff,
                 const Dtype* bottom_data, Dtype* bottom_diff);
@@ -118,9 +121,12 @@ class SRPRNNLayer : public Layer<Dtype>{
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
                        const vector<Blob<Dtype>*>& top);
 
-  virtual inline int_tp MinBottomBlobs() const { return 1; };
-  virtual inline int_tp MaxBottomBlobs() const { return 1; };
-  virtual inline int_tp ExactNumTopBlobs() const { return 1; };
+  // Input is the bottom data blob plus the function flag blob (optional)
+  virtual inline int_tp MinBottomBlobs() const { return 1; }
+  virtual inline int_tp MaxBottomBlobs() const { return 2; }
+  // Output is the main output neurons plus the export neurons (optional)
+  virtual inline int_tp MinNumTopBlobs() const { return 1; }
+  virtual inline int_tp MaxNumTopBlobs() const { return 2; }
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
                            const vector<Blob<Dtype>*>& top);
   virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
@@ -131,6 +137,7 @@ class SRPRNNLayer : public Layer<Dtype>{
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
                             const vector<bool>& propagate_down,
                             const vector<Blob<Dtype>*>& bottom);
+
  private:
   shared_ptr<SRPRNN<Dtype>> srprnn_;
 };
