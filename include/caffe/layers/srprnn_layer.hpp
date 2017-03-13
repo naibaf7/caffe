@@ -1,6 +1,7 @@
 #ifndef CAFFE_SRPRNN_LAYER_HPP_
 #define CAFFE_SRPRNN_LAYER_HPP_
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -114,6 +115,7 @@ class SRPRNN : public LibDNN<Dtype> {
   std::string generate_bw_kernels(std::string name);
   std::string generate_wgc_kernels(std::string name);
   const SRPRNNConfig get_config();
+
  private:
   std::string relu_fw(std::string data_in,
                       std::string data_out,
@@ -133,7 +135,6 @@ class SRPRNN : public LibDNN<Dtype> {
   std::shared_ptr<Blob<Dtype>> bias_ref_;
   std::shared_ptr<Blob<Dtype>> wg_restrict_;
   std::shared_ptr<Blob<Dtype>> bias_restrict_;
-
 };
 
 

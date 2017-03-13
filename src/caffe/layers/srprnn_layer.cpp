@@ -1,6 +1,7 @@
 // Sparse repeated pattern recurrent neural network layer
 
 #include <algorithm>
+#include <map>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -352,12 +353,12 @@ std::string SRPRNN<Dtype>::relu_bw(std::string data_in,
   return ss.str();
 }
 
-std::string tuple_string(std::tuple<int_tp,int_tp,std::string>& tup) {
+std::string tuple_string(std::tuple<int_tp, int_tp, std::string> tup) {
   return std::to_string(std::get<0>(tup)) + "," +
          std::to_string(std::get<1>(tup));
 }
 
-std::string tuple_string(std::tuple<int_tp,int_tp,int_tp,std::string>& tup) {
+std::string tuple_string(std::tuple<int_tp, int_tp, int_tp, std::string> tup) {
   return std::to_string(std::get<0>(tup)) + "," +
          std::to_string(std::get<1>(tup)) + "," +
          std::to_string(std::get<2>(tup));
@@ -429,7 +430,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
     ss_phase << "if (y >= v_height || x >= v_width) {" << std::endl;
     ss_phase << "return;" << std::endl;
     ss_phase << "}" << std::endl;
-    std::map<std::string,std::tuple<int_tp, int_tp,std::string>>
+    std::map<std::string, std::tuple<int_tp, int_tp, std::string>>
         offset_guard_map;
     std::vector<std::string> current_neurons;
     std::stringstream ss_sub;
@@ -480,7 +481,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
                 config_.neurons[i].inputs[j].offset[1],
                 "");
             std::map<std::string,
-              std::tuple<int_tp,int_tp,std::string>>::iterator
+              std::tuple<int_tp, int_tp, std::string>>::iterator
                 offset_guard_map_it = offset_guard_map.find(
                                                      tuple_string(guard_tuple));
             if (offset_guard_map_it != offset_guard_map.end()) {
@@ -606,8 +607,8 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
     // Preparing neurons
     ss_phase << ss_sub.str();
     // Load and apply operator on weight and inputs of each neuron
-    std::map<std::string,std::tuple<int_tp,
-          int_tp,std::string>>::iterator offset_guard_map_it;
+    std::map<std::string, std::tuple<int_tp,
+          int_tp, std::string>>::iterator offset_guard_map_it;
     for (offset_guard_map_it = offset_guard_map.begin();
          offset_guard_map_it != offset_guard_map.end();
          ++offset_guard_map_it) {
@@ -686,7 +687,7 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
     ss_phase << "if (y >= v_height || x >= v_width) {" << std::endl;
     ss_phase << "return;" << std::endl;
     ss_phase << "}" << std::endl;
-    std::map<std::string,std::tuple<int_tp, int_tp, int_tp, std::string>>
+    std::map<std::string, std::tuple<int_tp, int_tp, int_tp, std::string>>
         offset_guard_map;
     std::vector<std::string> current_neurons;
     std::stringstream ss_sub;
@@ -720,7 +721,8 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
         } else {
           ss_loc << "0.0;" << std::endl;
         }
-        // Test if all the outputs from the current temporal offset are available
+        // Test if all the outputs from the current temporal offset
+        // are available
         for (int_tp j = 0; j < config_.neurons[i].outputs.size(); ++j) {
           if (config_.neurons[i].outputs[j].temp_offset <= 0 &&
               std::find(processed_neurons.begin(),
@@ -741,7 +743,7 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
                 config_.neurons[i].outputs[j].temp_offset,
                 "");
             std::map<std::string,
-              std::tuple<int_tp,int_tp,int_tp,std::string>>::iterator
+              std::tuple<int_tp, int_tp, int_tp, std::string>>::iterator
                 offset_guard_map_it = offset_guard_map.find(
                                                      tuple_string(guard_tuple));
             if (offset_guard_map_it != offset_guard_map.end()) {
@@ -865,8 +867,8 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
     // Preparing neurons
     ss_phase << ss_sub.str();
     // Load and apply operator on weight and inputs of each neuron
-    std::map<std::string,std::tuple<int_tp,int_tp,
-          int_tp,std::string>>::iterator offset_guard_map_it;
+    std::map<std::string, std::tuple<int_tp, int_tp,
+          int_tp, std::string>>::iterator offset_guard_map_it;
     for (offset_guard_map_it = offset_guard_map.begin();
          offset_guard_map_it != offset_guard_map.end();
          ++offset_guard_map_it) {
