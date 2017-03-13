@@ -38,13 +38,14 @@ typedef enum {
   SRPRNN_RESTRICT_FIXED_VALUE          = 2
 } srprnnRestrict_t;
 
-struct SRPRNNInputConfig {
-  SRPRNNInputConfig() {}
+struct SRPRNNIOConfig {
+  SRPRNNIOConfig() {}
   std::string name;
   int_tp temp_offset;
   std::vector<int_tp> offset;
   float weight;
-  int_tp input_off;
+  srprnnRestrict_t weight_restrict;
+  int_tp weight_mem_off;
 };
 
 struct SRPRNNNeuronConfig {
@@ -52,20 +53,25 @@ struct SRPRNNNeuronConfig {
   std::string name;
   srprnnOp_t operation;
   srprnnActivation_t activation;
-  std::vector<SRPRNNInputConfig> inputs;
+  std::vector<SRPRNNIOConfig> inputs;
+  std::vector<SRPRNNIOConfig> outputs;
   float bias;
+  srprnnRestrict_t bias_restrict;
   std::vector<int_tp> periodicity;
   int_tp neuron_off;
 };
 
 struct SRPRNNConfig {
   SRPRNNConfig() {}
+  int_tp fw_phases;
+  int_tp bw_phases;
   int_tp backprop_steps;
+  int_tp batch_size;
   int_tp temp_steps;
+  int_tp weight_count;
   device* dev_ptr = nullptr;
   srprnnGrid_t grid;
   std::vector<int_tp> shape;
-  int_tp group = 1;
   bool bias_term = false;
   bool fast_unsafe_math = false;
   bool weights_backward = true;
@@ -74,6 +80,10 @@ struct SRPRNNConfig {
   std::vector<std::string> input_neurons;
   std::vector<std::string> output_neurons;
   std::vector<std::string> export_neurons;
+  std::map<std::string, int_tp> neuron_offsets;
+  std::vector<int_tp> in_shape;
+  std::vector<int_tp> out_shape;
+  std::vector<int_tp> export_shape;
 };
 
 
@@ -81,13 +91,15 @@ template <typename Dtype>
 class SRPRNN : public LibDNN<Dtype> {
  public:
   explicit SRPRNN(SRPRNNConfig config);
-  void InitWeight(Dtype* cpu_weight_data);
-  void InitBias(Dtype* cpu_bias_data);
-  void Forward(const Dtype* flag_data,
+  void InitWeight(Dtype* cpu_weight_data,
+                  Dtype* cpu_weight_restrict_data);
+  void InitBias(Dtype* cpu_bias_data,
+                Dtype* cpu_bias_restrict_data);
+  void Forward(Dtype* flag_data,
                const Dtype* bottom_data, const Dtype* weight,
                const Dtype* bias, Dtype* top_data,
                Dtype* export_data);
-  void Backward(const Dtype* flag_data,
+  void Backward(Dtype* flag_data,
                 const Dtype* top_data, const Dtype* top_diff,
                 const Dtype* weight, Dtype* weight_diff,
                 const Dtype* bias, Dtype* bias_diff,
@@ -95,15 +107,33 @@ class SRPRNN : public LibDNN<Dtype> {
   void ResetTime();
   void GenerateKernels();
   std::string string_identifier();
+  std::string generate_defs();
   std::string generate_fw_defs();
   std::string generate_bw_defs();
-  std::string generate_wg_defs();
   std::string generate_fw_kernels(std::string name);
   std::string generate_bw_kernels(std::string name);
-  std::string generate_wg_kernels(std::string name);
+  std::string generate_wgc_kernels(std::string name);
+  const SRPRNNConfig get_config();
  private:
+  std::string relu_fw(std::string data_in,
+                      std::string data_out,
+                      Dtype neg_slope);
+  std::string relu_bw(std::string data_in,
+                      std::string diff_in,
+                      std::string diff_out,
+                      Dtype neg_slope);
+  // SRPRNN Configuration
   SRPRNNConfig config_;
-  int_tp phases_;
+  int_tp base_;
+  bool check_weights_;
+
+  // Required memory blobs
+  std::shared_ptr<Blob<Dtype>> buf_;
+  std::shared_ptr<Blob<Dtype>> wg_ref_;
+  std::shared_ptr<Blob<Dtype>> bias_ref_;
+  std::shared_ptr<Blob<Dtype>> wg_restrict_;
+  std::shared_ptr<Blob<Dtype>> bias_restrict_;
+
 };
 
 

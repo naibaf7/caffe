@@ -1463,6 +1463,12 @@ message SRPRNNParameter {
   repeated SRPRNNNeuron hidden_neuron = 6;
 }
 
+enum SRPRNNRestriction {
+  FREE = 0;
+  FIXED_SIGN = 1;
+  FIXED_VALUE = 2;
+}
+
 message SRPRNNNeuron {
   // Neuron name
   optional string name = 1 [default = ""];
@@ -1485,12 +1491,7 @@ message SRPRNNNeuron {
   optional SRPRNNOperation operation = 5 [default = ADD];
   repeated SRPRNNInput input = 6;
   // Bias restrictions
-  enum SRPRNNBiasRestriction {
-  	FREE = 0;
-  	FIXED_SIGN = 1;
-  	FIXED_VALUE = 2;
-  }
-  optional SRPRNNBiasRestriction bias_restriction = 7 [default = FREE];
+  optional SRPRNNRestriction bias_restriction = 7 [default = FREE];
 }
 
 message SRPRNNInput {
@@ -1502,13 +1503,8 @@ message SRPRNNInput {
   optional int64 temp_offset = 3 [default = 0];
   // Spatial offset defined once per grid dimension
   repeated int64 offset = 4;
-  // Weight restrictions
-  enum SRPRNNWeightRestriction {
-  	FREE = 0;
-  	FIXED_SIGN = 1;
-  	FIXED_VALUE = 2;
-  }
-  optional SRPRNNWeightRestriction weight_restriction = 5 [default = FREE];
+  // Weight restrictions}
+  optional SRPRNNRestriction weight_restriction = 5 [default = FREE];
 }
 
 message MergeCropParameter {
