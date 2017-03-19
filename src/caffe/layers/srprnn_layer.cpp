@@ -7,6 +7,8 @@
 #include <vector>
 #include "caffe/layers/srprnn_layer.hpp"
 
+#define MAX_NEURONS_PER_PHASE 5
+
 namespace caffe {
 
 template<typename Dtype>
@@ -353,6 +355,13 @@ std::string SRPRNN<Dtype>::relu_bw(std::string data_in,
   return ss.str();
 }
 
+std::string neuron_string(std::string neuron, int_tp yoff, int_tp xoff,
+                          int_tp temp_off) {
+  return neuron + "[" + std::to_string(yoff) + ","
+                      + std::to_string(xoff) + ","
+                      + std::to_string(temp_off) + "]";
+}
+
 std::string tuple_string(std::tuple<int_tp, int_tp, std::string> tup) {
   return std::to_string(std::get<0>(tup)) + "," +
          std::to_string(std::get<1>(tup));
@@ -376,7 +385,7 @@ std::string SRPRNN<Dtype>::generate_wgc_kernels(std::string name) {
   ss << "__global const Dtype* wg_restrict,";
   ss << "__global const Dtype* bias_restrict";
   ss << ") {" << std::endl;
-  ss << "int_tp i = get_global_id(0);";
+  ss << "int_tp i = get_global_id(0);" << std::endl;
   ss << "if (i < v_ns) {" << std::endl;
   ss << "if (bias_restrict[i] == SRPRNN_RESTRICT_FIXED_SIGN) {" << std::endl;
   ss << "bias[i] = bias_ref[i] >= 0 ? fabs(bias[i]) : -fabs(bias[i]);"
@@ -413,6 +422,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
   // all inputs available (computed). This entails neurons with t_off < 0 and
   // neurons that have been computed in a previous phase.
   do {
+    int_tp temp_id = 0;
     std::stringstream ss_phase;
     ss_phase << "__kernel" << std::endl;
     ss_phase << "void " << name << "_" << phase << "(";
@@ -432,11 +442,15 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
     ss_phase << "}" << std::endl;
     std::map<std::string, std::tuple<int_tp, int_tp, std::string>>
         offset_guard_map;
+    std::map<std::string, int_tp> temp_guard_map;
     std::vector<std::string> current_neurons;
     std::stringstream ss_sub;
     std::stringstream ss_act;
     std::stringstream ss_out;
     for (int_tp i = 0; i < config_.neurons.size(); ++i) {
+      if (current_neurons.size() >= MAX_NEURONS_PER_PHASE) {
+        break;
+      }
       // Check if neuron hasn't been processed yet
       if (std::find(current_neurons.begin(), current_neurons.end(),
                     config_.neurons[i].name) == current_neurons.end() &&
@@ -488,7 +502,31 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
               guard_tuple = offset_guard_map_it->second;
               ss_ld << std::get<2>(guard_tuple);
             }
-            // Test if periodicity of this input is higer than (1,1)
+            int_tp local_temp_id = 0;
+            std::map<std::string, int_tp>::iterator temp_guard_map_it =
+                temp_guard_map.find(
+                    neuron_string(config_.neurons[i].inputs[j].name,
+                                  config_.neurons[i].inputs[j].offset[0],
+                                  config_.neurons[i].inputs[j].offset[1],
+                                  config_.neurons[i].inputs[j].temp_offset));
+            if (temp_guard_map_it != temp_guard_map.end()) {
+              local_temp_id = temp_guard_map_it->second;
+            } else {
+              ss_ld << "Dtype tmp_" << temp_id
+                  << " = buf[(((v_tes + base + batch + ("
+                  << std::to_string(config_.neurons[i].inputs[j].temp_offset)
+                  << ")) % v_tes) * v_ns + "
+                  << config_.neuron_offsets[
+                               config_.neurons[i].inputs[j].name]
+                  << ") * v_ims + yoff * v_width + xoff];" << std::endl;
+              temp_guard_map[neuron_string(config_.neurons[i].inputs[j].name,
+                         config_.neurons[i].inputs[j].offset[0],
+                         config_.neurons[i].inputs[j].offset[1],
+                         config_.neurons[i].inputs[j].temp_offset)] = temp_id;
+              local_temp_id = temp_id;
+              ++temp_id;
+            }
+            // Test if periodicity of this input is higher than (1,1)
             // Add guards as necessary
             bool period_guard = false;
             for (int_tp k = 0; k < config_.neurons.size(); ++k) {
@@ -523,12 +561,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
                 break;
             }
             ss_ld << "(wg[" << config_.neurons[i].inputs[j].weight_mem_off
-                   << "] * buf[(((v_tes + base + batch + ("
-                   << std::to_string(config_.neurons[i].inputs[j].temp_offset)
-                   << ")) % v_tes) * v_ns + "
-                   << config_.neuron_offsets[
-                                config_.neurons[i].inputs[j].name]
-                   << ") * v_ims + yoff * v_width + xoff]);" << std::endl;
+                   << "] * tmp_" << local_temp_id << ");" << std::endl;
             if (period_guard) {
               ss_ld << "}" << std::endl;
             }
@@ -537,6 +570,8 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
           }
           // Calculate activation function
           switch (config_.neurons[i].activation) {
+            case SRPRNN_ACTIVATION_NONE:
+              break;
             case SRPRNN_ACTIVATION_RELU:
               ss_act << relu_fw(config_.neurons[i].name+"_reg",
                                 config_.neurons[i].name+"_reg",
@@ -549,7 +584,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
               // TODO
               break;
           }
-          // Test if periodicity of this input is higer than (1,1)
+          // Test if periodicity of this input is higher than (1,1)
           // Add guards as necessary
           bool period_guard = false;
           int_tp p0 = config_.neurons[i].periodicity[0];
@@ -689,11 +724,15 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
     ss_phase << "}" << std::endl;
     std::map<std::string, std::tuple<int_tp, int_tp, int_tp, std::string>>
         offset_guard_map;
+    std::map<std::string, int_tp> temp_guard_map;
     std::vector<std::string> current_neurons;
     std::stringstream ss_sub;
     std::stringstream ss_act;
     std::stringstream ss_out;
     for (int_tp i = 0; i < config_.neurons.size(); ++i) {
+      if (current_neurons.size() >= MAX_NEURONS_PER_PHASE) {
+        break;
+      }
       // Check if neuron hasn't been processed yet
       if (std::find(current_neurons.begin(), current_neurons.end(),
                     config_.neurons[i].name) == current_neurons.end() &&
@@ -750,7 +789,32 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
               guard_tuple = offset_guard_map_it->second;
               ss_ld << std::get<3>(guard_tuple);
             }
-            // Test if periodicity of this input is higer than (1,1)
+            int_tp local_temp_id = 0;
+            std::map<std::string, int_tp>::iterator temp_guard_map_it =
+                temp_guard_map.find(
+                    neuron_string(config_.neurons[i].outputs[j].name,
+                                  config_.neurons[i].outputs[j].offset[0],
+                                  config_.neurons[i].outputs[j].offset[1],
+                                  config_.neurons[i].outputs[j].temp_offset));
+            if (temp_guard_map_it != temp_guard_map.end()) {
+              local_temp_id = temp_guard_map_it->second;
+            } else {
+              // Load top diff
+              ss_ld << "Dtype tmp_" << temp_id
+                    << " = buf_diff[(((v_tes + base + batch + ("
+                    << std::to_string(config_.neurons[i].outputs[j].temp_offset)
+                    << ")) % v_tes) * v_ns + "
+                    << config_.neuron_offsets[
+                                  config_.neurons[i].outputs[j].name]
+                    << ") * v_ims + yoff * v_width + xoff];" << std::endl;
+              temp_guard_map[neuron_string(config_.neurons[i].outputs[j].name,
+                         config_.neurons[i].outputs[j].offset[0],
+                         config_.neurons[i].outputs[j].offset[1],
+                         config_.neurons[i].outputs[j].temp_offset)] = temp_id;
+              local_temp_id = temp_id;
+              ++temp_id;
+            }
+            // Test if periodicity of this input is higher than (1,1)
             // Add guards as necessary
             bool period_guard = false;
             for (int_tp k = 0; k < config_.neurons.size(); ++k) {
@@ -773,30 +837,21 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
                 }
               }
             }
-            // Load top diff
-            ss_ld << "Dtype tmp_" << temp_id
-                  << " = buf_diff[(((v_tes + base + batch + ("
-                  << std::to_string(config_.neurons[i].outputs[j].temp_offset)
-                  << ")) % v_tes) * v_ns + "
-                  << config_.neuron_offsets[
-                                config_.neurons[i].outputs[j].name]
-                  << ") * v_ims + yoff * v_width + xoff];" << std::endl;
             // Add up bottom diff
             ss_ld << config_.neurons[i].name << "_diff_reg += ";
             ss_ld << "wg[" << config_.neurons[i].outputs[j].weight_mem_off
-                  << "] * tmp_" << temp_id << ";" << std::endl;
+                  << "] * tmp_" << local_temp_id << ";" << std::endl;
             // Add up bias diff
             ss_ld << "atomicAdd(&"
                   << "(bias_diff[" << config_.neuron_offsets[
                                          config_.neurons[i].outputs[j].name]
-                  << "]), tmp_" << temp_id << ");" << std::endl;
+                  << "]), tmp_" << local_temp_id << ");" << std::endl;
             // Add up weight diff
             ss_ld << "atomicAdd(&"
                   << "(wg_diff["
                   << config_.neurons[i].outputs[j].weight_mem_off
-                  << "]), tmp_" << temp_id << " * " << config_.neurons[i].name
+                  << "]), tmp_" << local_temp_id << " * " << config_.neurons[i].name
                   << "_reg);" << std::endl;
-            ++temp_id;
             if (period_guard) {
               ss_ld << "}" << std::endl;
             }
@@ -805,6 +860,8 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
           }
           // Calculate activation function
           switch (config_.neurons[i].activation) {
+            case SRPRNN_ACTIVATION_NONE:
+              break;
             case SRPRNN_ACTIVATION_RELU:
               ss_act << relu_bw(config_.neurons[i].name+"_reg",
                                 config_.neurons[i].name+"_diff_reg",
@@ -818,7 +875,7 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
               // TODO
               break;
           }
-          // Test if periodicity of this input is higer than (1,1)
+          // Test if periodicity of this input is higher than (1,1)
           // Add guards as necessary
           bool period_guard = false;
           int_tp p0 = config_.neurons[i].periodicity[0];
@@ -1041,6 +1098,9 @@ void SRPRNNLayer<Dtype>::Reshape(
           break;
       }
       switch (neuron_param.activation()) {
+        case SRPRNNNeuron_SRPRNNActivation_None:
+          neuron.activation = SRPRNN_ACTIVATION_NONE;
+          break;
         case SRPRNNNeuron_SRPRNNActivation_ReLU:
           neuron.activation = SRPRNN_ACTIVATION_RELU;
           break;

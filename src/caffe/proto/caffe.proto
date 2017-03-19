@@ -1477,9 +1477,10 @@ message SRPRNNNeuron {
   // Neuron initial bias
   optional float bias = 3;
   enum SRPRNNActivation {
-    ReLU = 0;
-    TanH = 1;
-    Sigmoid = 2;
+  	None = 0;
+    ReLU = 1;
+    TanH = 2;
+    Sigmoid = 3;
   }
   // Activation used for the neuron
   optional SRPRNNActivation activation = 4 [default = ReLU];

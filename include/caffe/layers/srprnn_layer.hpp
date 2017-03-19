@@ -22,9 +22,10 @@ typedef enum {
 } srprnnGrid_t;
 
 typedef enum {
-  SRPRNN_ACTIVATION_RELU               = 0,
-  SRPRNN_ACTIVATION_TANH               = 1,
-  SRPRNN_ACTIVATION_SIGMOID            = 2
+  SRPRNN_ACTIVATION_NONE               = 0,
+  SRPRNN_ACTIVATION_RELU               = 1,
+  SRPRNN_ACTIVATION_TANH               = 2,
+  SRPRNN_ACTIVATION_SIGMOID            = 3
 } srprnnActivation_t;
 
 typedef enum {
