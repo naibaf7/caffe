@@ -850,7 +850,8 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
             ss_ld << "atomicAdd(&"
                   << "(wg_diff["
                   << config_.neurons[i].outputs[j].weight_mem_off
-                  << "]), tmp_" << local_temp_id << " * " << config_.neurons[i].name
+                  << "]), tmp_" << local_temp_id << " * "
+                  << config_.neurons[i].name
                   << "_reg);" << std::endl;
             if (period_guard) {
               ss_ld << "}" << std::endl;

@@ -1975,6 +1975,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "",    // NOLINT
 "#define INTERPOL_NEAREST    0",    // NOLINT
 "#define INTERPOL_BILINEAR   1",    // NOLINT
+"#define INTERPOL_OMMATIDIA  2",    // NOLINT
 "",    // NOLINT
 "#define TYPE_CARTESIAN      0",    // NOLINT
 "#define TYPE_HEXGRID        1",    // NOLINT
@@ -2089,6 +2090,166 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "}",    // NOLINT
 "if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
 "v3 = bottom_data[x1+(y1+c*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"Dtype w0 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x0-u*fs)",    // NOLINT
+"/ (Dtype)abs(x1-x0);",    // NOLINT
+"Dtype w1 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x1-u*fs)",    // NOLINT
+"/ (Dtype)abs(x1-x0);",    // NOLINT
+"Dtype w2 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y0-v*fs)",    // NOLINT
+"/ (Dtype)abs(y1-y0);",    // NOLINT
+"Dtype w3 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y1-v*fs)",    // NOLINT
+"/ (Dtype)abs(y1-y0);",    // NOLINT
+"value = (v0*w1+v1*w0)*w3+(v2*w1+v3*w0)*w2;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"",    // NOLINT
+"// Special image resampling for drosophila ommatidia",    // NOLINT
+"if (interpol == INTERPOL_OMMATIDIA) {",    // NOLINT
+"// Determine correct input from RGB channel for rhabdomeres",    // NOLINT
+"// c % 8 = [0,...,7] = [R1,...,R8]",    // NOLINT
+"int_tp rhabdomer = c % 8;",    // NOLINT
+"",    // NOLINT
+"if (fs > (Dtype)2.0) {",    // NOLINT
+"int_tp count = 0;",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"int_tp x = (int_tp)round(u*fs);",    // NOLINT
+"int_tp y = (int_tp)round(v*fs);",    // NOLINT
+"if (x < 0 || y < 0 || x >= srcwidth || y >= srcheight) {",    // NOLINT
+"value = (Dtype)0.0;",    // NOLINT
+"} else {",    // NOLINT
+"for (int_tp iy = (int_tp)floor((v-sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"iy < (int_tp)ceil((v+sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"++iy) {",    // NOLINT
+"for (int_tp ix = (int_tp)floor((u-sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"ix < (int_tp)ceil((u+sqrt((Dtype)3.0)",    // NOLINT
+"/((Dtype)3.0))*fs);",    // NOLINT
+"++ix) {",    // NOLINT
+"if (!(ix < 0 || iy < 0 || ix >= srcwidth || iy >= srcheight) &&",    // NOLINT
+"(((Dtype)1.0)/((Dtype)3.0)*pow(fs, (Dtype)2.0)",    // NOLINT
+">= pow((Dtype)ix-u*fs, (Dtype)2.0) +",    // NOLINT
+"pow((Dtype)iy-v*fs, (Dtype)2.0))) {",    // NOLINT
+"if (rhabdomer < 6) {",    // NOLINT
+"// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
+"value += 0.2989 * bottom_data[ix+(iy+0*srcheight)*srcwidth];",    // NOLINT
+"value += 0.5870 * bottom_data[ix+(iy+1*srcheight)*srcwidth];",    // NOLINT
+"value += 0.1140 * bottom_data[ix+(iy+2*srcheight)*srcwidth];",    // NOLINT
+"} else if (rhabdomer == 6) {",    // NOLINT
+"// R7 receives UV (we use the red image channel here)",    // NOLINT
+"value += bottom_data[ix+(iy+0*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// R8 receives blue or green",    // NOLINT
+"if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
+"// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
+"value += bottom_data[ix+(iy+2*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
+"value += bottom_data[ix+(iy+1*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"++count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (count > 0) {",    // NOLINT
+"value /= (Dtype)count;",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (fs <= (Dtype)2.0) {",    // NOLINT
+"int_tp x0 = (int_tp)floor(u*fs);",    // NOLINT
+"int_tp y0 = (int_tp)floor(v*fs);",    // NOLINT
+"int_tp x1 = (int_tp)ceil(u*fs);",    // NOLINT
+"int_tp y1 = (int_tp)ceil(v*fs);",    // NOLINT
+"Dtype v0 = (Dtype)0.0;",    // NOLINT
+"Dtype v1 = (Dtype)0.0;",    // NOLINT
+"Dtype v2 = (Dtype)0.0;",    // NOLINT
+"Dtype v3 = (Dtype)0.0;",    // NOLINT
+"if (y0 >= 0 && y0 < srcheight) {",    // NOLINT
+"if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
+"if (rhabdomer < 6) {",    // NOLINT
+"// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
+"v0 += 0.2989 * bottom_data[x0+(y0+0*srcheight)*srcwidth];",    // NOLINT
+"v0 += 0.5870 * bottom_data[x0+(y0+1*srcheight)*srcwidth];",    // NOLINT
+"v0 += 0.1140 * bottom_data[x0+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"} else if (rhabdomer == 6) {",    // NOLINT
+"// R7 receives UV (we use the red image channel here)",    // NOLINT
+"v0 += bottom_data[x0+(y0+0*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// R8 receives blue or green",    // NOLINT
+"if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
+"// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
+"v0 += bottom_data[x0+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
+"v0 += bottom_data[x0+(y0+1*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
+"if (rhabdomer < 6) {",    // NOLINT
+"// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
+"v1 += 0.2989 * bottom_data[x1+(y0+0*srcheight)*srcwidth];",    // NOLINT
+"v1 += 0.5870 * bottom_data[x1+(y0+1*srcheight)*srcwidth];",    // NOLINT
+"v1 += 0.1140 * bottom_data[x1+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"} else if (rhabdomer == 6) {",    // NOLINT
+"// R7 receives UV (we use the red image channel here)",    // NOLINT
+"v1 += bottom_data[x1+(y0+0*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// R8 receives blue or green",    // NOLINT
+"if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
+"// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
+"v1 += bottom_data[x1+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
+"v1 += bottom_data[x1+(y0+1*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (y1 >= 0 && y1 < srcheight) {",    // NOLINT
+"if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
+"if (rhabdomer < 6) {",    // NOLINT
+"// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
+"v2 += 0.2989 * bottom_data[x0+(y1+0*srcheight)*srcwidth];",    // NOLINT
+"v2 += 0.5870 * bottom_data[x0+(y1+1*srcheight)*srcwidth];",    // NOLINT
+"v2 += 0.1140 * bottom_data[x0+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"} else if (rhabdomer == 6) {",    // NOLINT
+"// R7 receives UV (we use the red image channel here)",    // NOLINT
+"v2 += bottom_data[x0+(y1+0*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// R8 receives blue or green",    // NOLINT
+"if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
+"// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
+"v2 += bottom_data[x0+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
+"v2 += bottom_data[x0+(y1+1*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
+"if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
+"if (rhabdomer < 6) {",    // NOLINT
+"// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
+"v3 += 0.2989 * bottom_data[x1+(y1+0*srcheight)*srcwidth];",    // NOLINT
+"v3 += 0.5870 * bottom_data[x1+(y1+1*srcheight)*srcwidth];",    // NOLINT
+"v3 += 0.1140 * bottom_data[x1+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"} else if (rhabdomer == 6) {",    // NOLINT
+"// R7 receives UV (we use the red image channel here)",    // NOLINT
+"v3 += bottom_data[x1+(y1+0*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// R8 receives blue or green",    // NOLINT
+"if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
+"// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
+"v3 += bottom_data[x1+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"} else {",    // NOLINT
+"// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
+"v3 += bottom_data[x1+(y1+1*srcheight)*srcwidth];",    // NOLINT
+"}",    // NOLINT
+"}",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "Dtype w0 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x0-u*fs)",    // NOLINT

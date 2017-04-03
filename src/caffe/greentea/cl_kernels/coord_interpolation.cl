@@ -4,6 +4,7 @@
 
 #define INTERPOL_NEAREST    0
 #define INTERPOL_BILINEAR   1
+#define INTERPOL_OMMATIDIA  2
 
 #define TYPE_CARTESIAN      0
 #define TYPE_HEXGRID        1
@@ -118,6 +119,166 @@ __kernel void TEMPLATE(coord_interpolation,Dtype)(
             }
             if (x1 >= 0 && x1 < srcwidth) {
               v3 = bottom_data[x1+(y1+c*srcheight)*srcwidth];
+            }
+          }
+          Dtype w0 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x0-u*fs)
+              / (Dtype)abs(x1-x0);
+          Dtype w1 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x1-u*fs)
+              / (Dtype)abs(x1-x0);
+          Dtype w2 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y0-v*fs)
+              / (Dtype)abs(y1-y0);
+          Dtype w3 = y0 == y1 ? (Dtype)0.5 : fabs((Dtype)y1-v*fs)
+              / (Dtype)abs(y1-y0);
+          value = (v0*w1+v1*w0)*w3+(v2*w1+v3*w0)*w2;
+        }
+      }
+
+      // Special image resampling for drosophila ommatidia
+      if (interpol == INTERPOL_OMMATIDIA) {
+        // Determine correct input from RGB channel for rhabdomeres
+        // c % 8 = [0,...,7] = [R1,...,R8]
+        int_tp rhabdomer = c % 8;
+
+        if (fs > (Dtype)2.0) {
+          int_tp count = 0;
+          value = (Dtype)0.0;
+          int_tp x = (int_tp)round(u*fs);
+          int_tp y = (int_tp)round(v*fs);
+          if (x < 0 || y < 0 || x >= srcwidth || y >= srcheight) {
+            value = (Dtype)0.0;
+          } else {
+            for (int_tp iy = (int_tp)floor((v-sqrt((Dtype)3.0)
+                                      /((Dtype)3.0))*fs);
+                        iy < (int_tp)ceil((v+sqrt((Dtype)3.0)
+                                      /((Dtype)3.0))*fs);
+                      ++iy) {
+              for (int_tp ix = (int_tp)floor((u-sqrt((Dtype)3.0)
+                                      /((Dtype)3.0))*fs);
+                          ix < (int_tp)ceil((u+sqrt((Dtype)3.0)
+                                      /((Dtype)3.0))*fs);
+                        ++ix) {
+                if (!(ix < 0 || iy < 0 || ix >= srcwidth || iy >= srcheight) &&
+                    (((Dtype)1.0)/((Dtype)3.0)*pow(fs, (Dtype)2.0)
+                    >= pow((Dtype)ix-u*fs, (Dtype)2.0) +
+                       pow((Dtype)iy-v*fs, (Dtype)2.0))) {
+                  if (rhabdomer < 6) {
+                    // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
+                    value += 0.2989 * bottom_data[ix+(iy+0*srcheight)*srcwidth];
+                    value += 0.5870 * bottom_data[ix+(iy+1*srcheight)*srcwidth];
+                    value += 0.1140 * bottom_data[ix+(iy+2*srcheight)*srcwidth];
+                  } else if (rhabdomer == 6) {
+                    // R7 receives UV (we use the red image channel here)
+                    value += bottom_data[ix+(iy+0*srcheight)*srcwidth];
+                  } else {
+                    // R8 receives blue or green
+                    if (h % 2 == 0 && w % 2 == 0) {
+                      // Account for ~25-30% blue (pale) ommatidia
+                      value += bottom_data[ix+(iy+2*srcheight)*srcwidth];
+                    } else {
+                      // Account for ~70-75% green (yellow) ommatidia
+                      value += bottom_data[ix+(iy+1*srcheight)*srcwidth];
+                    }
+                  }
+                  ++count;
+                }
+              }
+            }
+          }
+          if (count > 0) {
+            value /= (Dtype)count;
+          }
+        }
+        if (fs <= (Dtype)2.0) {
+          int_tp x0 = (int_tp)floor(u*fs);
+          int_tp y0 = (int_tp)floor(v*fs);
+          int_tp x1 = (int_tp)ceil(u*fs);
+          int_tp y1 = (int_tp)ceil(v*fs);
+          Dtype v0 = (Dtype)0.0;
+          Dtype v1 = (Dtype)0.0;
+          Dtype v2 = (Dtype)0.0;
+          Dtype v3 = (Dtype)0.0;
+          if (y0 >= 0 && y0 < srcheight) {
+            if (x0 >= 0 && x0 < srcwidth) {
+              if (rhabdomer < 6) {
+                // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
+                v0 += 0.2989 * bottom_data[x0+(y0+0*srcheight)*srcwidth];
+                v0 += 0.5870 * bottom_data[x0+(y0+1*srcheight)*srcwidth];
+                v0 += 0.1140 * bottom_data[x0+(y0+2*srcheight)*srcwidth];
+              } else if (rhabdomer == 6) {
+                // R7 receives UV (we use the red image channel here)
+                v0 += bottom_data[x0+(y0+0*srcheight)*srcwidth];
+              } else {
+                // R8 receives blue or green
+                if (h % 2 == 0 && w % 2 == 0) {
+                  // Account for ~25-30% blue (pale) ommatidia
+                  v0 += bottom_data[x0+(y0+2*srcheight)*srcwidth];
+                } else {
+                  // Account for ~70-75% green (yellow) ommatidia
+                  v0 += bottom_data[x0+(y0+1*srcheight)*srcwidth];
+                }
+              }
+            }
+            if (x1 >= 0 && x1 < srcwidth) {
+              if (rhabdomer < 6) {
+                // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
+                v1 += 0.2989 * bottom_data[x1+(y0+0*srcheight)*srcwidth];
+                v1 += 0.5870 * bottom_data[x1+(y0+1*srcheight)*srcwidth];
+                v1 += 0.1140 * bottom_data[x1+(y0+2*srcheight)*srcwidth];
+              } else if (rhabdomer == 6) {
+                // R7 receives UV (we use the red image channel here)
+                v1 += bottom_data[x1+(y0+0*srcheight)*srcwidth];
+              } else {
+                // R8 receives blue or green
+                if (h % 2 == 0 && w % 2 == 0) {
+                  // Account for ~25-30% blue (pale) ommatidia
+                  v1 += bottom_data[x1+(y0+2*srcheight)*srcwidth];
+                } else {
+                  // Account for ~70-75% green (yellow) ommatidia
+                  v1 += bottom_data[x1+(y0+1*srcheight)*srcwidth];
+                }
+              }
+            }
+          }
+          if (y1 >= 0 && y1 < srcheight) {
+            if (x0 >= 0 && x0 < srcwidth) {
+              if (rhabdomer < 6) {
+                // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
+                v2 += 0.2989 * bottom_data[x0+(y1+0*srcheight)*srcwidth];
+                v2 += 0.5870 * bottom_data[x0+(y1+1*srcheight)*srcwidth];
+                v2 += 0.1140 * bottom_data[x0+(y1+2*srcheight)*srcwidth];
+              } else if (rhabdomer == 6) {
+                // R7 receives UV (we use the red image channel here)
+                v2 += bottom_data[x0+(y1+0*srcheight)*srcwidth];
+              } else {
+                // R8 receives blue or green
+                if (h % 2 == 0 && w % 2 == 0) {
+                  // Account for ~25-30% blue (pale) ommatidia
+                  v2 += bottom_data[x0+(y1+2*srcheight)*srcwidth];
+                } else {
+                  // Account for ~70-75% green (yellow) ommatidia
+                  v2 += bottom_data[x0+(y1+1*srcheight)*srcwidth];
+                }
+              }
+            }
+            if (x1 >= 0 && x1 < srcwidth) {
+              if (rhabdomer < 6) {
+                // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
+                v3 += 0.2989 * bottom_data[x1+(y1+0*srcheight)*srcwidth];
+                v3 += 0.5870 * bottom_data[x1+(y1+1*srcheight)*srcwidth];
+                v3 += 0.1140 * bottom_data[x1+(y1+2*srcheight)*srcwidth];
+              } else if (rhabdomer == 6) {
+                // R7 receives UV (we use the red image channel here)
+                v3 += bottom_data[x1+(y1+0*srcheight)*srcwidth];
+              } else {
+                // R8 receives blue or green
+                if (h % 2 == 0 && w % 2 == 0) {
+                  // Account for ~25-30% blue (pale) ommatidia
+                  v3 += bottom_data[x1+(y1+2*srcheight)*srcwidth];
+                } else {
+                  // Account for ~70-75% green (yellow) ommatidia
+                  v3 += bottom_data[x1+(y1+1*srcheight)*srcwidth];
+                }
+              }
             }
           }
           Dtype w0 = x0 == x1 ? (Dtype)0.5 : fabs((Dtype)x0-u*fs)
