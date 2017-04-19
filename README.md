@@ -2,7 +2,14 @@
 
 **This is an experimental, community-maintained branch led by Fabian Tschopp (@naibaf7). It is a work-in-progress.**
 
+Caffe is a deep learning framework made with expression, speed, and modularity in mind.
+It is developed by Berkeley AI Research ([BAIR](http://bair.berkeley.edu))/The Berkeley Vision and Learning Center (BVLC) and community contributors.
+
+Caffe is released under the [BSD 2-Clause license](https://github.com/BVLC/caffe/blob/master/LICENSE).
+The BAIR/BVLC reference models are released for unrestricted use.
+
 **For error reports, please run and include the result of `./build/test/test_all.testbin --gtest_filter=*OpenCLKernelCompileTest* X` where `X` is the OpenCL device to test (i.e. `0`). This test is available after a build with `make all`, `make runtest`.**
+
 
 This branch of Caffe contains an OpenCL backend and additional layers for fast image segmentation.
 This work is partially supported by:
@@ -12,9 +19,10 @@ This work is partially supported by:
 - ETH Zurich
 - Intel
 
-For a C++ frontend and models to use for image segmentation with this fork, see:
-- Frontend: https://github.com/naibaf7/caffe_neural_tool
-- Models: https://github.com/naibaf7/caffe_neural_models
+- [DIY Deep Learning for Vision with Caffe](https://docs.google.com/presentation/d/1UeKXVgRvvxg9OUdh_UiC5G71UMscNPlvArsWER41PsU/edit#slide=id.p)
+- [Tutorial Documentation](http://caffe.berkeleyvision.org/tutorial/)
+- [BAIR reference models](http://caffe.berkeleyvision.org/model_zoo.html) and the [community model zoo](https://github.com/BVLC/caffe/wiki/Model-Zoo)
+- [Installation instructions](http://caffe.berkeleyvision.org/installation.html)
 
 ## OpenCL Backend
 
@@ -112,13 +120,14 @@ If CUDA is not installed Caffe will default to a CPU_ONLY build. If you have CUD
 
 ### Using the Python interface
 
-The recommended Python distribution is Anaconda or Miniconda. To successfully build the python interface you need to install the following packages:
+The recommended Python distribution is Anaconda or Miniconda. To successfully build the python interface you need to add the following conda channels:
 ```
-conda install --yes numpy scipy matplotlib scikit-image pip six
+conda config --add channels conda-forge
+conda config --add channels willyd
 ```
-also you will need a protobuf python package that is compatible with pre-built dependencies. This package can be installed this way:
+and install the following packages:
 ```
-conda install --yes --channel willyd protobuf==3.1.0
+conda install --yes cmake ninja numpy scipy protobuf==3.1.0 six scikit-image pyyaml pydotplus graphviz
 ```
 If Python is installed the default is to build the python interface and python layers. If you wish to disable the python layers or the python build use the CMake options `-DBUILD_python_layer=0` and `-DBUILD_python=0` respectively. In order to use the python interface you need to either add the `C:\Projects\caffe\python` folder to your python path of copy the `C:\Projects\caffe\python\caffe` folder to your `site_packages` folder.
 

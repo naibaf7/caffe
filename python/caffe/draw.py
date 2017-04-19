@@ -9,6 +9,7 @@ Caffe network visualization: draw the NetParameter protobuffer.
     Caffe.
 """
 
+import os
 from caffe.proto import caffe_pb2
 
 """
@@ -20,6 +21,35 @@ try:
     import pydotplus as pydot
 except ImportError:
     import pydot
+
+
+if os.name == 'nt':
+    # Workaround to find graphviz executables
+    # with graphviz conda package under windows
+
+    # Monkeypatch the pydot package
+    pydot_find_graphviz = pydot.graphviz.find_graphviz
+
+    def resolve_graphviz_executables():
+        """
+        Resolve the graphviz executables by adding a `graphviz` suffix
+        to folders located on path
+        """
+        # first check if we can find the executables the normal way
+        progs = pydot_find_graphviz()
+        if not progs:
+            directories = os.environ['PATH'].split(';')
+            suffix = 'graphviz'
+            progs = {}
+            for directory in directories:
+                for exe in ['dot', 'twopi', 'neato', 'circo', 'fdp']:
+                    full_path = os.path.join(directory, suffix,
+                                             '{}.exe'.format(exe))
+                    if os.path.exists(full_path):
+                        progs[exe] = full_path
+        return progs
+
+    pydot.graphviz.find_graphviz = resolve_graphviz_executables
 
 # Internal layer and blob styles.
 LAYER_STYLE_DEFAULT = {'shape': 'record',
@@ -98,6 +128,7 @@ def get_layer_label(layer, rankdir):
                       layer.convolution_param.pad[0] if len(layer.convolution_param.pad) > 0 else 0,
                       separator,
                       layer.convolution_param.dilation[0] if len(layer.convolution_param.dilation) > 0 else 1)
+
     elif layer.type == 'Pooling':
         pooling_types_dict = get_pooling_types_dict()
         node_label = '"%s%s(%s %s)%skernel size: %d%sstride: %d%spad: %d%sdilation: %d"' %\
@@ -106,13 +137,13 @@ def get_layer_label(layer, rankdir):
                       pooling_types_dict[layer.pooling_param.pool],
                       layer.type,
                       separator,
-                      layer.pooling_param.kernel_size,
+                      layer.pooling_param.kernel_size[0] if len(layer.pooling_param.kernel_size) > 0 else 1,
                       separator,
-                      layer.pooling_param.stride[0] if len(layer.pooling_param.stride._values) > 0 else 1,
+                      layer.pooling_param.stride[0] if len(layer.pooling_param.stride) > 0 else 1,
                       separator,
-                      layer.pooling_param.pad[0] if len(layer.pooling_param.pad._values) > 0 else 0,
+                      layer.pooling_param.pad[0] if len(layer.pooling_param.pad) > 0 else 0,
                       separator,
-                      layer.pooling_param.dilation[0] if len(layer.pooling_param.dilation._values) > 0 else 1)
+                      layer.pooling_param.dilation[0] if len(layer.pooling_param.dilation) > 0 else 1)
     else:
         node_label = '"%s%s(%s)"' % (layer.name, separator, layer.type)
     return node_label
