@@ -110,6 +110,7 @@ class SRPRNN : public LibDNN<Dtype> {
   void GenerateKernels();
   std::string string_identifier();
   std::string generate_defs();
+  void export_config();
   std::string generate_fw_defs();
   std::string generate_bw_defs();
   std::string generate_fw_kernels(std::string name);
@@ -125,6 +126,16 @@ class SRPRNN : public LibDNN<Dtype> {
                       std::string diff_in,
                       std::string diff_out,
                       Dtype neg_slope);
+  std::string tanh_fw(std::string data_in,
+                      std::string data_out);
+  std::string tanh_bw(std::string data_out,
+                      std::string diff_in,
+                      std::string diff_out);
+  std::string sigmoid_fw(std::string data_in,
+                      std::string data_out);
+  std::string sigmoid_bw(std::string data_out,
+                      std::string diff_in,
+                      std::string diff_out);
   // SRPRNN Configuration
   SRPRNNConfig config_;
   int_tp base_;

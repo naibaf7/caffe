@@ -58,7 +58,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "__global Dtype* out_diff) {",    // NOLINT
 "for (int_tp index = get_global_id(0); index < n; index += get_global_size(0)) {",    // NOLINT
 "Dtype tanhx = out_data[index];",    // NOLINT
-"out_diff[index] = in_diff[index] * (1 - tanhx * tanhx);",    // NOLINT
+"out_diff[index] = in_diff[index] * (1.0 - tanhx * tanhx);",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "",    // NOLINT
@@ -76,7 +76,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "__global Dtype* out_diff) {",    // NOLINT
 "for (int_tp index = get_global_id(0); index < n; index += get_global_size(0)) {",    // NOLINT
 "const Dtype sigmoid_x = out_data[index];",    // NOLINT
-"out_diff[index] = in_diff[index] * sigmoid_x * (1 - sigmoid_x);",    // NOLINT
+"out_diff[index] = in_diff[index] * sigmoid_x * (1.0 - sigmoid_x);",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "",    // NOLINT
@@ -2062,6 +2062,7 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "// Determine correct input from RGB channel for rhabdomeres",    // NOLINT
 "// c % 8 = [0,...,7] = [R1,...,R8]",    // NOLINT
 "int_tp rhabdomer = c % 8;",    // NOLINT
+"int_tp batch = c / 8;",    // NOLINT
 "",    // NOLINT
 "if (fs > (Dtype)2.0) {",    // NOLINT
 "int_tp count = 0;",    // NOLINT
@@ -2087,20 +2088,20 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "pow((Dtype)iy-v*fs, (Dtype)2.0))) {",    // NOLINT
 "if (rhabdomer < 6) {",    // NOLINT
 "// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
-"value += 0.2989 * bottom_data[ix+(iy+0*srcheight)*srcwidth];",    // NOLINT
-"value += 0.5870 * bottom_data[ix+(iy+1*srcheight)*srcwidth];",    // NOLINT
-"value += 0.1140 * bottom_data[ix+(iy+2*srcheight)*srcwidth];",    // NOLINT
+"value += 0.2989 * bottom_data[ix+(iy+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"value += 0.5870 * bottom_data[ix+(iy+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"value += 0.1140 * bottom_data[ix+(iy+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else if (rhabdomer == 6) {",    // NOLINT
 "// R7 receives UV (we use the red image channel here)",    // NOLINT
-"value += bottom_data[ix+(iy+0*srcheight)*srcwidth];",    // NOLINT
+"value += bottom_data[ix+(iy+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// R8 receives blue or green",    // NOLINT
 "if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
 "// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
-"value += bottom_data[ix+(iy+2*srcheight)*srcwidth];",    // NOLINT
+"value += bottom_data[ix+(iy+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
-"value += bottom_data[ix+(iy+1*srcheight)*srcwidth];",    // NOLINT
+"value += bottom_data[ix+(iy+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "++count;",    // NOLINT
@@ -2125,40 +2126,40 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
 "if (rhabdomer < 6) {",    // NOLINT
 "// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
-"v0 += 0.2989 * bottom_data[x0+(y0+0*srcheight)*srcwidth];",    // NOLINT
-"v0 += 0.5870 * bottom_data[x0+(y0+1*srcheight)*srcwidth];",    // NOLINT
-"v0 += 0.1140 * bottom_data[x0+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"v0 += 0.2989 * bottom_data[x0+(y0+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v0 += 0.5870 * bottom_data[x0+(y0+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v0 += 0.1140 * bottom_data[x0+(y0+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else if (rhabdomer == 6) {",    // NOLINT
 "// R7 receives UV (we use the red image channel here)",    // NOLINT
-"v0 += bottom_data[x0+(y0+0*srcheight)*srcwidth];",    // NOLINT
+"v0 += bottom_data[x0+(y0+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// R8 receives blue or green",    // NOLINT
 "if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
 "// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
-"v0 += bottom_data[x0+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"v0 += bottom_data[x0+(y0+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
-"v0 += bottom_data[x0+(y0+1*srcheight)*srcwidth];",    // NOLINT
+"v0 += bottom_data[x0+(y0+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
 "if (rhabdomer < 6) {",    // NOLINT
 "// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
-"v1 += 0.2989 * bottom_data[x1+(y0+0*srcheight)*srcwidth];",    // NOLINT
-"v1 += 0.5870 * bottom_data[x1+(y0+1*srcheight)*srcwidth];",    // NOLINT
-"v1 += 0.1140 * bottom_data[x1+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"v1 += 0.2989 * bottom_data[x1+(y0+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v1 += 0.5870 * bottom_data[x1+(y0+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v1 += 0.1140 * bottom_data[x1+(y0+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else if (rhabdomer == 6) {",    // NOLINT
 "// R7 receives UV (we use the red image channel here)",    // NOLINT
-"v1 += bottom_data[x1+(y0+0*srcheight)*srcwidth];",    // NOLINT
+"v1 += bottom_data[x1+(y0+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// R8 receives blue or green",    // NOLINT
 "if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
 "// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
-"v1 += bottom_data[x1+(y0+2*srcheight)*srcwidth];",    // NOLINT
+"v1 += bottom_data[x1+(y0+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
-"v1 += bottom_data[x1+(y0+1*srcheight)*srcwidth];",    // NOLINT
+"v1 += bottom_data[x1+(y0+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
@@ -2167,40 +2168,40 @@ static std::vector<std::vector<std::string>> cl_kernels{
 "if (x0 >= 0 && x0 < srcwidth) {",    // NOLINT
 "if (rhabdomer < 6) {",    // NOLINT
 "// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
-"v2 += 0.2989 * bottom_data[x0+(y1+0*srcheight)*srcwidth];",    // NOLINT
-"v2 += 0.5870 * bottom_data[x0+(y1+1*srcheight)*srcwidth];",    // NOLINT
-"v2 += 0.1140 * bottom_data[x0+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"v2 += 0.2989 * bottom_data[x0+(y1+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v2 += 0.5870 * bottom_data[x0+(y1+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v2 += 0.1140 * bottom_data[x0+(y1+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else if (rhabdomer == 6) {",    // NOLINT
 "// R7 receives UV (we use the red image channel here)",    // NOLINT
-"v2 += bottom_data[x0+(y1+0*srcheight)*srcwidth];",    // NOLINT
+"v2 += bottom_data[x0+(y1+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// R8 receives blue or green",    // NOLINT
 "if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
 "// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
-"v2 += bottom_data[x0+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"v2 += bottom_data[x0+(y1+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
-"v2 += bottom_data[x0+(y1+1*srcheight)*srcwidth];",    // NOLINT
+"v2 += bottom_data[x0+(y1+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "if (x1 >= 0 && x1 < srcwidth) {",    // NOLINT
 "if (rhabdomer < 6) {",    // NOLINT
 "// Rhabdomer 0 - 5 (R1 - R6) receive grayscale input",    // NOLINT
-"v3 += 0.2989 * bottom_data[x1+(y1+0*srcheight)*srcwidth];",    // NOLINT
-"v3 += 0.5870 * bottom_data[x1+(y1+1*srcheight)*srcwidth];",    // NOLINT
-"v3 += 0.1140 * bottom_data[x1+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"v3 += 0.2989 * bottom_data[x1+(y1+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v3 += 0.5870 * bottom_data[x1+(y1+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
+"v3 += 0.1140 * bottom_data[x1+(y1+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else if (rhabdomer == 6) {",    // NOLINT
 "// R7 receives UV (we use the red image channel here)",    // NOLINT
-"v3 += bottom_data[x1+(y1+0*srcheight)*srcwidth];",    // NOLINT
+"v3 += bottom_data[x1+(y1+(0+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// R8 receives blue or green",    // NOLINT
 "if (h % 2 == 0 && w % 2 == 0) {",    // NOLINT
 "// Account for ~25-30% blue (pale) ommatidia",    // NOLINT
-"v3 += bottom_data[x1+(y1+2*srcheight)*srcwidth];",    // NOLINT
+"v3 += bottom_data[x1+(y1+(2+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "} else {",    // NOLINT
 "// Account for ~70-75% green (yellow) ommatidia",    // NOLINT
-"v3 += bottom_data[x1+(y1+1*srcheight)*srcwidth];",    // NOLINT
+"v3 += bottom_data[x1+(y1+(1+3*batch)*srcheight)*srcwidth];",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT
 "}",    // NOLINT

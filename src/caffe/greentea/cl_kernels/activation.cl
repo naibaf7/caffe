@@ -36,7 +36,7 @@ __kernel void TEMPLATE(tanh_backward,Dtype)(const int_tp n,
                                             __global Dtype* out_diff) {
   for (int_tp index = get_global_id(0); index < n; index += get_global_size(0)) {
     Dtype tanhx = out_data[index];
-    out_diff[index] = in_diff[index] * (1 - tanhx * tanhx);
+    out_diff[index] = in_diff[index] * (1.0 - tanhx * tanhx);
   }
 }
 
@@ -54,7 +54,7 @@ __kernel void TEMPLATE(sigmoid_backward,Dtype)(const int_tp n,
                                                __global Dtype* out_diff) {
   for (int_tp index = get_global_id(0); index < n; index += get_global_size(0)) {
     const Dtype sigmoid_x = out_data[index];
-    out_diff[index] = in_diff[index] * sigmoid_x * (1 - sigmoid_x);
+    out_diff[index] = in_diff[index] * sigmoid_x * (1.0 - sigmoid_x);
   }
 }
 

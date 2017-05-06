@@ -58,7 +58,21 @@ const SRPRNNConfig SRPRNN<Dtype> ::get_config() {
 template<typename Dtype>
 std::string SRPRNN<Dtype>::string_identifier() {
   std::stringstream ss;
-  ss << "SRPRNN_";
+  ss << "SRPRNN_[";
+  for (int_tp i = 0; i < config_.input_neurons.size(); ++i) {
+    ss << config_.input_neurons[i];
+    if (i < config_.input_neurons.size() - 1) {
+      ss << ",";
+    }
+  }
+  ss << "]_[";
+  for (int_tp i = 0; i < config_.output_neurons.size(); ++i) {
+    ss << config_.output_neurons[i];
+    if (i < config_.output_neurons.size() - 1) {
+      ss << ",";
+    }
+  }
+  ss << "]_";
   if (std::is_same<Dtype, double>::value) {
     ss << "double_";
   } else {
@@ -67,6 +81,56 @@ std::string SRPRNN<Dtype>::string_identifier() {
   // Device name
   ss << LibDNN<Dtype>::dev_ptr_->name();
   return ss.str();
+}
+
+template<typename Dtype>
+void SRPRNN<Dtype>::export_config() {
+
+  {
+    FILE* fp = fopen((string_identifier() + "_neuron_off.csv").c_str(), "wb");
+
+    std::stringstream ss;
+    for(int_tp i = 0; i < config_.neurons.size(); ++i) {
+      ss << config_.neurons[i].name << "," << config_.neurons[i].neuron_off
+         << std::endl;
+    }
+
+
+    fwrite(ss.str().c_str(), sizeof(char), ss.str().length(), fp);
+    fclose(fp);
+  }
+
+
+  {
+    FILE* fp = fopen((string_identifier() + "_edge_off.csv").c_str(), "wb");
+
+    std::stringstream ss;
+    for (int_tp i = 0; i < config_.neurons.size(); ++i) {
+      for (int_tp j = 0; j < config_.neurons[i].inputs.size(); ++j) {
+        ss << config_.neurons[i].name << ","
+           << config_.neurons[i].inputs[j].name << ","
+           << config_.neurons[i].inputs[j].weight_mem_off << std::endl;
+      }
+    }
+
+    fwrite(ss.str().c_str(), sizeof(char), ss.str().length(), fp);
+    fclose(fp);
+  }
+
+  {
+    FILE* fp = fopen((string_identifier() + "_export_off.csv").c_str(), "wb");
+
+    std::stringstream ss;
+    for (int_tp i = 0; i < config_.export_neurons.size(); ++i) {
+      ss << config_.export_neurons[i] << "," << i
+         << std::endl;
+    }
+
+    fwrite(ss.str().c_str(), sizeof(char), ss.str().length(), fp);
+    fclose(fp);
+  }
+
+
 }
 
 template<typename Dtype>
@@ -348,10 +412,46 @@ std::string SRPRNN<Dtype>::relu_bw(std::string data_in,
                                    Dtype neg_slope) {
   std::stringstream ss;
   ss << diff_out << " = " << diff_in << " * "
-     << "((" << data_in << " > 0?1.0:0.0) + "
-     << "(" << data_in << " <= 0?1.0:0.0) * " << std::to_string(neg_slope)
+     << "((" << data_in << " > 0.0?1.0:0.0) + "
+     << "(" << data_in << " <= 0.0?1.0:0.0) * " << std::to_string(neg_slope)
      << ");"
      << std::endl;
+  return ss.str();
+}
+
+template<typename Dtype>
+std::string SRPRNN<Dtype>::tanh_fw(std::string data_in,
+                                   std::string data_out) {
+  std::stringstream ss;
+  ss << data_out << " = tanh(" << data_in << ");" << std::endl;
+  return ss.str();
+}
+
+template<typename Dtype>
+std::string SRPRNN<Dtype>::tanh_bw(std::string data_out,
+                                   std::string diff_in,
+                                   std::string diff_out) {
+  std::stringstream ss;
+  ss << diff_out << " = " << diff_in << " * " << "(1.0 - "
+     << data_out << " * " << data_out << ");" << std::endl;
+  return ss.str();
+}
+
+template<typename Dtype>
+std::string SRPRNN<Dtype>::sigmoid_fw(std::string data_in,
+                                   std::string data_out) {
+  std::stringstream ss;
+  ss << data_out << " = 1.0 / (1.0 + exp(-" << data_in << "));" << std::endl;
+  return ss.str();
+}
+
+template<typename Dtype>
+std::string SRPRNN<Dtype>::sigmoid_bw(std::string data_out,
+                                   std::string diff_in,
+                                   std::string diff_out) {
+  std::stringstream ss;
+  ss << diff_out << " = " << diff_in << " * "
+     << data_out << " * (1.0 - " << data_out << ");" << std::endl;
   return ss.str();
 }
 
@@ -470,10 +570,12 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
           ss_loc << "im_in[((batch * v_is + "
                  << std::to_string(it_input_neurons
                            - config_.input_neurons.begin()) << ") "
-                 << "* v_ims) + y * v_width + x];"
-                 << std::endl;
+                 << "* v_ims) + y * v_width + x]"
+                 << " + bias[" << config_.neuron_offsets[
+                       config_.neurons[i].name] << "];" << std::endl;
         } else {
-          ss_loc << "0.0;" << std::endl;
+          ss_loc << "bias[" << config_.neuron_offsets[
+                       config_.neurons[i].name] << "];" << std::endl;
         }
         // Test if all the inputs from the current temporal offset are available
         for (int_tp j = 0; j < config_.neurons[i].inputs.size(); ++j) {
@@ -578,10 +680,12 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
                                 0.0001);
               break;
             case SRPRNN_ACTIVATION_SIGMOID:
-              // TODO
+              ss_act << sigmoid_fw(config_.neurons[i].name+"_reg",
+                                   config_.neurons[i].name+"_reg");
               break;
             case SRPRNN_ACTIVATION_TANH:
-              // TODO
+              ss_act << tanh_fw(config_.neurons[i].name+"_reg",
+                                config_.neurons[i].name+"_reg");
               break;
           }
           // Test if periodicity of this input is higher than (1,1)
@@ -655,7 +759,7 @@ std::string SRPRNN<Dtype>::generate_fw_kernels(std::string name) {
       ss_phase << "int_tp yoff = y + (" << yoff << ");" << std::endl;
       ss_phase << "int_tp xoff = x + (" << xoff << ");" << std::endl;
       ss_phase << "if ((xoff >= 0) && (xoff < v_width) &&"
-               << " (yoff >= -v_height) && (yoff < 2*v_height) &&"
+               << " (2*yoff+xoff >= 0) && (2*yoff+xoff < 4*v_height) &&"
           << "!((2*y+x < 2 * v_height && 2*yoff+xoff >= 2 * v_height) || "
           << "(2*y+x >= 2 * v_height && 2*yoff+xoff < 2 * v_height))"
                << ") {" << std::endl;
@@ -870,10 +974,14 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
                                 0.0001);
               break;
             case SRPRNN_ACTIVATION_SIGMOID:
-              // TODO
+              ss_act << sigmoid_bw(config_.neurons[i].name+"_reg",
+                                   config_.neurons[i].name+"_diff_reg",
+                                   config_.neurons[i].name+"_diff_reg");
               break;
             case SRPRNN_ACTIVATION_TANH:
-              // TODO
+              ss_act << tanh_bw(config_.neurons[i].name+"_reg",
+                                config_.neurons[i].name+"_diff_reg",
+                                config_.neurons[i].name+"_diff_reg");
               break;
           }
           // Test if periodicity of this input is higher than (1,1)
@@ -942,7 +1050,7 @@ std::string SRPRNN<Dtype>::generate_bw_kernels(std::string name) {
         ss_phase << "int_tp toff = batch + (" << toff << ");" << std::endl;
       }
       ss_phase << "if ((xoff >= 0) && (xoff < v_width) &&"
-               << " (yoff >= -v_height) && (yoff < 2*v_height) &&"
+               << " (2*yoff+xoff >= 0) && (2*yoff+xoff < 4*v_height) &&"
           << "!((2*y+x < 2 * v_height && 2*yoff+xoff >= 2 * v_height) || "
           << "(2*y+x >= 2 * v_height && 2*yoff+xoff < 2 * v_height))";
       if (toff > 0) {
@@ -994,6 +1102,8 @@ void SRPRNN<Dtype>::GenerateKernels() {
 
   // Write complete kernel string
   LibDNN<Dtype>::kernel_ = ss.str();
+
+  export_config();
 }
 
 template<typename Dtype>

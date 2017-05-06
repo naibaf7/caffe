@@ -138,6 +138,7 @@ __kernel void TEMPLATE(coord_interpolation,Dtype)(
         // Determine correct input from RGB channel for rhabdomeres
         // c % 8 = [0,...,7] = [R1,...,R8]
         int_tp rhabdomer = c % 8;
+        int_tp batch = c / 8;
 
         if (fs > (Dtype)2.0) {
           int_tp count = 0;
@@ -163,20 +164,20 @@ __kernel void TEMPLATE(coord_interpolation,Dtype)(
                        pow((Dtype)iy-v*fs, (Dtype)2.0))) {
                   if (rhabdomer < 6) {
                     // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
-                    value += 0.2989 * bottom_data[ix+(iy+0*srcheight)*srcwidth];
-                    value += 0.5870 * bottom_data[ix+(iy+1*srcheight)*srcwidth];
-                    value += 0.1140 * bottom_data[ix+(iy+2*srcheight)*srcwidth];
+                    value += 0.2989 * bottom_data[ix+(iy+(0+3*batch)*srcheight)*srcwidth];
+                    value += 0.5870 * bottom_data[ix+(iy+(1+3*batch)*srcheight)*srcwidth];
+                    value += 0.1140 * bottom_data[ix+(iy+(2+3*batch)*srcheight)*srcwidth];
                   } else if (rhabdomer == 6) {
                     // R7 receives UV (we use the red image channel here)
-                    value += bottom_data[ix+(iy+0*srcheight)*srcwidth];
+                    value += bottom_data[ix+(iy+(0+3*batch)*srcheight)*srcwidth];
                   } else {
                     // R8 receives blue or green
                     if (h % 2 == 0 && w % 2 == 0) {
                       // Account for ~25-30% blue (pale) ommatidia
-                      value += bottom_data[ix+(iy+2*srcheight)*srcwidth];
+                      value += bottom_data[ix+(iy+(2+3*batch)*srcheight)*srcwidth];
                     } else {
                       // Account for ~70-75% green (yellow) ommatidia
-                      value += bottom_data[ix+(iy+1*srcheight)*srcwidth];
+                      value += bottom_data[ix+(iy+(1+3*batch)*srcheight)*srcwidth];
                     }
                   }
                   ++count;
@@ -201,40 +202,40 @@ __kernel void TEMPLATE(coord_interpolation,Dtype)(
             if (x0 >= 0 && x0 < srcwidth) {
               if (rhabdomer < 6) {
                 // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
-                v0 += 0.2989 * bottom_data[x0+(y0+0*srcheight)*srcwidth];
-                v0 += 0.5870 * bottom_data[x0+(y0+1*srcheight)*srcwidth];
-                v0 += 0.1140 * bottom_data[x0+(y0+2*srcheight)*srcwidth];
+                v0 += 0.2989 * bottom_data[x0+(y0+(0+3*batch)*srcheight)*srcwidth];
+                v0 += 0.5870 * bottom_data[x0+(y0+(1+3*batch)*srcheight)*srcwidth];
+                v0 += 0.1140 * bottom_data[x0+(y0+(2+3*batch)*srcheight)*srcwidth];
               } else if (rhabdomer == 6) {
                 // R7 receives UV (we use the red image channel here)
-                v0 += bottom_data[x0+(y0+0*srcheight)*srcwidth];
+                v0 += bottom_data[x0+(y0+(0+3*batch)*srcheight)*srcwidth];
               } else {
                 // R8 receives blue or green
                 if (h % 2 == 0 && w % 2 == 0) {
                   // Account for ~25-30% blue (pale) ommatidia
-                  v0 += bottom_data[x0+(y0+2*srcheight)*srcwidth];
+                  v0 += bottom_data[x0+(y0+(2+3*batch)*srcheight)*srcwidth];
                 } else {
                   // Account for ~70-75% green (yellow) ommatidia
-                  v0 += bottom_data[x0+(y0+1*srcheight)*srcwidth];
+                  v0 += bottom_data[x0+(y0+(1+3*batch)*srcheight)*srcwidth];
                 }
               }
             }
             if (x1 >= 0 && x1 < srcwidth) {
               if (rhabdomer < 6) {
                 // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
-                v1 += 0.2989 * bottom_data[x1+(y0+0*srcheight)*srcwidth];
-                v1 += 0.5870 * bottom_data[x1+(y0+1*srcheight)*srcwidth];
-                v1 += 0.1140 * bottom_data[x1+(y0+2*srcheight)*srcwidth];
+                v1 += 0.2989 * bottom_data[x1+(y0+(0+3*batch)*srcheight)*srcwidth];
+                v1 += 0.5870 * bottom_data[x1+(y0+(1+3*batch)*srcheight)*srcwidth];
+                v1 += 0.1140 * bottom_data[x1+(y0+(2+3*batch)*srcheight)*srcwidth];
               } else if (rhabdomer == 6) {
                 // R7 receives UV (we use the red image channel here)
-                v1 += bottom_data[x1+(y0+0*srcheight)*srcwidth];
+                v1 += bottom_data[x1+(y0+(0+3*batch)*srcheight)*srcwidth];
               } else {
                 // R8 receives blue or green
                 if (h % 2 == 0 && w % 2 == 0) {
                   // Account for ~25-30% blue (pale) ommatidia
-                  v1 += bottom_data[x1+(y0+2*srcheight)*srcwidth];
+                  v1 += bottom_data[x1+(y0+(2+3*batch)*srcheight)*srcwidth];
                 } else {
                   // Account for ~70-75% green (yellow) ommatidia
-                  v1 += bottom_data[x1+(y0+1*srcheight)*srcwidth];
+                  v1 += bottom_data[x1+(y0+(1+3*batch)*srcheight)*srcwidth];
                 }
               }
             }
@@ -243,40 +244,40 @@ __kernel void TEMPLATE(coord_interpolation,Dtype)(
             if (x0 >= 0 && x0 < srcwidth) {
               if (rhabdomer < 6) {
                 // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
-                v2 += 0.2989 * bottom_data[x0+(y1+0*srcheight)*srcwidth];
-                v2 += 0.5870 * bottom_data[x0+(y1+1*srcheight)*srcwidth];
-                v2 += 0.1140 * bottom_data[x0+(y1+2*srcheight)*srcwidth];
+                v2 += 0.2989 * bottom_data[x0+(y1+(0+3*batch)*srcheight)*srcwidth];
+                v2 += 0.5870 * bottom_data[x0+(y1+(1+3*batch)*srcheight)*srcwidth];
+                v2 += 0.1140 * bottom_data[x0+(y1+(2+3*batch)*srcheight)*srcwidth];
               } else if (rhabdomer == 6) {
                 // R7 receives UV (we use the red image channel here)
-                v2 += bottom_data[x0+(y1+0*srcheight)*srcwidth];
+                v2 += bottom_data[x0+(y1+(0+3*batch)*srcheight)*srcwidth];
               } else {
                 // R8 receives blue or green
                 if (h % 2 == 0 && w % 2 == 0) {
                   // Account for ~25-30% blue (pale) ommatidia
-                  v2 += bottom_data[x0+(y1+2*srcheight)*srcwidth];
+                  v2 += bottom_data[x0+(y1+(2+3*batch)*srcheight)*srcwidth];
                 } else {
                   // Account for ~70-75% green (yellow) ommatidia
-                  v2 += bottom_data[x0+(y1+1*srcheight)*srcwidth];
+                  v2 += bottom_data[x0+(y1+(1+3*batch)*srcheight)*srcwidth];
                 }
               }
             }
             if (x1 >= 0 && x1 < srcwidth) {
               if (rhabdomer < 6) {
                 // Rhabdomer 0 - 5 (R1 - R6) receive grayscale input
-                v3 += 0.2989 * bottom_data[x1+(y1+0*srcheight)*srcwidth];
-                v3 += 0.5870 * bottom_data[x1+(y1+1*srcheight)*srcwidth];
-                v3 += 0.1140 * bottom_data[x1+(y1+2*srcheight)*srcwidth];
+                v3 += 0.2989 * bottom_data[x1+(y1+(0+3*batch)*srcheight)*srcwidth];
+                v3 += 0.5870 * bottom_data[x1+(y1+(1+3*batch)*srcheight)*srcwidth];
+                v3 += 0.1140 * bottom_data[x1+(y1+(2+3*batch)*srcheight)*srcwidth];
               } else if (rhabdomer == 6) {
                 // R7 receives UV (we use the red image channel here)
-                v3 += bottom_data[x1+(y1+0*srcheight)*srcwidth];
+                v3 += bottom_data[x1+(y1+(0+3*batch)*srcheight)*srcwidth];
               } else {
                 // R8 receives blue or green
                 if (h % 2 == 0 && w % 2 == 0) {
                   // Account for ~25-30% blue (pale) ommatidia
-                  v3 += bottom_data[x1+(y1+2*srcheight)*srcwidth];
+                  v3 += bottom_data[x1+(y1+(2+3*batch)*srcheight)*srcwidth];
                 } else {
                   // Account for ~70-75% green (yellow) ommatidia
-                  v3 += bottom_data[x1+(y1+1*srcheight)*srcwidth];
+                  v3 += bottom_data[x1+(y1+(1+3*batch)*srcheight)*srcwidth];
                 }
               }
             }
