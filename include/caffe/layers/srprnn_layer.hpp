@@ -98,14 +98,15 @@ class SRPRNN : public LibDNN<Dtype> {
   void InitBias(Dtype* cpu_bias_data,
                 Dtype* cpu_bias_restrict_data);
   void Forward(Dtype* flag_data,
-               const Dtype* bottom_data, const Dtype* weight,
-               const Dtype* bias, Dtype* top_data,
+               const Dtype* bottom_data, Dtype* weight,
+               Dtype* bias, Dtype* top_data,
                Dtype* export_data);
   void Backward(Dtype* flag_data,
                 const Dtype* top_data, const Dtype* top_diff,
-                const Dtype* weight, Dtype* weight_diff,
-                const Dtype* bias, Dtype* bias_diff,
+                Dtype* weight, Dtype* weight_diff,
+                Dtype* bias, Dtype* bias_diff,
                 const Dtype* bottom_data, Dtype* bottom_diff);
+  void CheckWeights(const Dtype* weight, const Dtype* bias);
   void ResetTime();
   void GenerateKernels();
   std::string string_identifier();

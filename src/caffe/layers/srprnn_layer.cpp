@@ -109,7 +109,11 @@ void SRPRNN<Dtype>::export_config() {
       for (int_tp j = 0; j < config_.neurons[i].inputs.size(); ++j) {
         ss << config_.neurons[i].name << ","
            << config_.neurons[i].inputs[j].name << ","
-           << config_.neurons[i].inputs[j].weight_mem_off << std::endl;
+           << config_.neurons[i].inputs[j].weight_mem_off << ","
+           << config_.neurons[i].inputs[j].offset[0] << ","
+           << config_.neurons[i].inputs[j].offset[1] << ","
+           << config_.neurons[i].inputs[j].temp_offset << ","
+           << std::endl;
       }
     }
 
@@ -133,28 +137,12 @@ void SRPRNN<Dtype>::export_config() {
 
 }
 
+
 template<typename Dtype>
-void SRPRNN<Dtype>::Forward(Dtype* flag_data,
-                            const Dtype* bottom_data,
-                            const Dtype* weight,
-                            const Dtype* bias,
-                            Dtype* top_data,
-                            Dtype* export_data) {
+void SRPRNN<Dtype>::CheckWeights(const Dtype* weight,
+                                 const Dtype* bias) {
   int_tp lws_x = 4;
   int_tp lws_y = 4;
-
-  // Check if flags are available
-  if (flag_data != nullptr) {
-    // Test the reset flag
-    if ((int_tp)flag_data[0] == 1) {
-      // Reset current base and batch
-      base_ = 0;
-      // Reset the flag
-      flag_data[0] = 0;
-      this->SetMemory(buf_.get()->mutable_gpu_data(),
-                      buf_.get()->count(), 0, 0.0);
-    }
-  }
 
   if (check_weights_) {
     const Dtype* wg_ref_data = wg_ref_.get()->gpu_data();
@@ -211,6 +199,32 @@ void SRPRNN<Dtype>::Forward(Dtype* flag_data,
 #endif
     check_weights_ = false;
   }
+}
+
+template<typename Dtype>
+void SRPRNN<Dtype>::Forward(Dtype* flag_data,
+                            const Dtype* bottom_data,
+                            Dtype* weight,
+                            Dtype* bias,
+                            Dtype* top_data,
+                            Dtype* export_data) {
+  int_tp lws_x = 4;
+  int_tp lws_y = 4;
+
+  // Check if flags are available
+  if (flag_data != nullptr) {
+    // Test the reset flag
+    if ((int_tp)flag_data[0] == 1) {
+      // Reset current base and batch
+      base_ = 0;
+      // Reset the flag
+      flag_data[0] = 0;
+      this->SetMemory(buf_.get()->mutable_gpu_data(),
+                      buf_.get()->count(), 0, 0.0);
+    }
+  }
+
+  CheckWeights(weight, bias);
 
   Dtype* buf_data = buf_.get()->mutable_gpu_data();
 
@@ -272,8 +286,8 @@ void SRPRNN<Dtype>::Forward(Dtype* flag_data,
 template<typename Dtype>
 void SRPRNN<Dtype>::Backward(Dtype* flag_data,
                              const Dtype* top_data, const Dtype* top_diff,
-                             const Dtype* weight, Dtype* weight_diff,
-                             const Dtype* bias, Dtype* bias_diff,
+                             Dtype* weight, Dtype* weight_diff,
+                             Dtype* bias, Dtype* bias_diff,
                              const Dtype* bottom_data, Dtype* bottom_diff) {
   int_tp lws_x = 4;
   int_tp lws_y = 4;
@@ -361,9 +375,9 @@ template<typename Dtype>
 std::string SRPRNN<Dtype>::generate_defs() {
   std::stringstream ss;
   int_tp size = config_.shape[0] * config_.shape[1];
-  LibDNN<Dtype>::add_def(ss, "SRPRNN_RESTRICT_FREE", 0);
-  LibDNN<Dtype>::add_def(ss, "SRPRNN_RESTRICT_FIXED_SIGN", 1);
-  LibDNN<Dtype>::add_def(ss, "SRPRNN_RESTRICT_FIXED_VALUE", 2);
+  LibDNN<Dtype>::add_def(ss, "SRPRNN_RESTRICT_FREE", 0.0);
+  LibDNN<Dtype>::add_def(ss, "SRPRNN_RESTRICT_FIXED_SIGN", 1.0);
+  LibDNN<Dtype>::add_def(ss, "SRPRNN_RESTRICT_FIXED_VALUE", 2.0);
 
   LibDNN<Dtype>::add_def(ss, "v_bas", config_.batch_size);
   LibDNN<Dtype>::add_def(ss, "v_bps", config_.backprop_steps);
@@ -495,7 +509,7 @@ std::string SRPRNN<Dtype>::generate_wgc_kernels(std::string name) {
   ss << "bias[i] = bias_ref[i];" << std::endl;
   ss << "}" << std::endl;
   ss << "}" << std::endl;
-  ss << "if (i >= v_ns && i < v_ns + v_is) {" << std::endl;
+  ss << "if (i >= v_ns && i < v_ns + v_ws) {" << std::endl;
   ss << "i -= v_ns;" << std::endl;
   ss << "if (wg_restrict[i] == SRPRNN_RESTRICT_FIXED_SIGN) {" << std::endl;
   ss << "wg[i] = wg_ref[i] >= 0 ? fabs(wg[i]) : -fabs(wg[i]);"
@@ -1118,7 +1132,7 @@ void SRPRNN<Dtype>::InitWeight(Dtype* cpu_weight_data,
       }
       if (cpu_weight_restrict_data != nullptr) {
         cpu_weight_restrict_data[config_.neurons[i].inputs[j].weight_mem_off]
-                      = (int_tp)config_.neurons[i].inputs[j].weight_restrict;
+            = static_cast<Dtype> (config_.neurons[i].inputs[j].weight_restrict);
       }
     }
   }
@@ -1135,7 +1149,7 @@ void SRPRNN<Dtype>::InitBias(Dtype* cpu_bias_data,
     }
     if (cpu_bias_restrict_data != nullptr) {
       cpu_bias_restrict_data[config_.neurons[i].neuron_off]
-                  = (int_tp)config_.neurons[i].bias_restrict;
+          = static_cast<Dtype>(config_.neurons[i].bias_restrict);
     }
   }
 }
@@ -1195,6 +1209,17 @@ void SRPRNNLayer<Dtype>::Reshape(
       SRPRNNNeuronConfig neuron;
       neuron.name = neuron_param.name();
       neuron.bias = neuron_param.bias();
+      switch (neuron_param.bias_restriction()) {
+        case FREE:
+          neuron.bias_restrict = SRPRNN_RESTRICT_FREE;
+          break;
+        case FIXED_SIGN:
+          neuron.bias_restrict = SRPRNN_RESTRICT_FIXED_SIGN;
+          break;
+        case FIXED_VALUE:
+          neuron.bias_restrict = SRPRNN_RESTRICT_FIXED_VALUE;
+          break;
+      }
       std::vector<int_tp> periodicity;
       for (int_tp j = 0; j < neuron_param.periodicity_size(); ++j) {
         periodicity.push_back(neuron_param.periodicity(j));
@@ -1236,6 +1261,17 @@ void SRPRNNLayer<Dtype>::Reshape(
                                    std::abs(input.temp_offset));
         input.weight = input_param.weight();
         input.name = input_param.name();
+        switch (input_param.weight_restriction()) {
+          case FREE:
+            input.weight_restrict = SRPRNN_RESTRICT_FREE;
+            break;
+          case FIXED_SIGN:
+            input.weight_restrict = SRPRNN_RESTRICT_FIXED_SIGN;
+            break;
+          case FIXED_VALUE:
+            input.weight_restrict = SRPRNN_RESTRICT_FIXED_VALUE;
+            break;
+        }
         inputs.push_back(input);
         // Count number of synaptic connections (= weights)
         ++weight_count;
@@ -1424,8 +1460,8 @@ STUB_GPU(SRPRNNLayer);
 template<typename Dtype>
 void SRPRNNLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
                                           const vector<Blob<Dtype>*>& top) {
-  const Dtype* weight = this->blobs_[0]->gpu_data();
-  const Dtype* bias = this->blobs_[1]->gpu_data();
+  Dtype* weight = this->blobs_[0]->mutable_gpu_data();
+  Dtype* bias = this->blobs_[1]->mutable_gpu_data();
 
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = top[0]->mutable_gpu_data();
@@ -1449,9 +1485,9 @@ template<typename Dtype>
 void SRPRNNLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
                                       const vector<bool>& propagate_down,
                                       const vector<Blob<Dtype>*>& bottom) {
-  const Dtype* weight = this->blobs_[0]->gpu_data();
+  Dtype* weight = this->blobs_[0]->mutable_gpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_gpu_diff();
-  const Dtype* bias = this->blobs_[1]->gpu_data();
+  Dtype* bias = this->blobs_[1]->mutable_gpu_data();
   Dtype* bias_diff = this->blobs_[1]->mutable_gpu_diff();
 
   const Dtype* top_data = top[0]->gpu_data();
