@@ -36,6 +36,7 @@ if(NOT COMMAND find_host_program)
   endmacro()
 endif()
 
+ADD_DEFINITIONS(-Wno-delete-non-virtual-dtor -Wno-switch -Wno-deprecated-declarations -Wno-reorder -Wno-return-type -Wno-extra-tokens -Wno-overloaded-virtual -Wno-literal-conversion -Wno-unused-variable -Wno-unused-local-typedef -Wno-instantiation-after-specialization)
 # ---[ Using cmake scripts and modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
 
